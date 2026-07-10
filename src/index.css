@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #8CC63F; /* e-Bharat green shade approximation */
+  --color-primary-dark: #166534;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Global Dark Mode Overrides (inverts standard tailwind gray scale) */
+.dark {
+  --color-white: #111827; /* gray-900 */
+  --color-gray-50: #1f2937; /* gray-800 */
+  --color-gray-100: #374151; /* gray-700 */
+  --color-gray-200: #4b5563; /* gray-600 */
+  --color-gray-300: #6b7280; /* gray-500 */
+  --color-gray-400: #9ca3af; /* gray-400 */
+  --color-gray-500: #d1d5db; /* gray-300 */
+  --color-gray-600: #e5e7eb; /* gray-200 */
+  --color-gray-700: #f3f4f6; /* gray-100 */
+  --color-gray-800: #f9fafb; /* gray-50 */
+  --color-gray-900: #ffffff; /* white */
+  --color-black: #ffffff;
+  color-scheme: dark;
+}
