@@ -27,6 +27,9 @@ const routeTitles = {
   '/news': 'NEWS MANAGEMENT',
   '/bookings': 'BOOKING MANAGEMENT',
   '/profile': 'MY PROFILE',
+  '/marketplace/products': 'PRODUCT MANAGEMENT',
+  '/marketplace/orders': 'ORDER MANAGEMENT',
+  '/marketplace/categories': 'CATEGORY MANAGEMENT',
 };
 
 const AdminLayout = () => {
@@ -38,7 +41,6 @@ const AdminLayout = () => {
   return (
     <div className="flex h-screen w-full bg-gray-50 overflow-hidden font-sans">
       
-      {/* Mobile Sidebar Overlay */}
       {isMobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity"
@@ -46,15 +48,12 @@ const AdminLayout = () => {
         ></div>
       )}
 
-      {/* Sidebar */}
       <div className={`fixed inset-y-0 left-0 z-50 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out h-full`}>
         <Sidebar onClose={() => setIsMobileMenuOpen(false)} />
       </div>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative w-full">
         
-        {/* Global Top Navbar */}
         <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between z-30 shadow-sm">
           
           <div className="flex items-center gap-4">
@@ -68,13 +67,11 @@ const AdminLayout = () => {
               <Menu size={24} />
             </button>
 
-            {/* Dynamic Page Title Badge */}
             <div className="text-[#ED811B] px-5 py-2 font-semibold text-sm tracking-wide hidden sm:block">
               {currentTitle}
             </div>
           </div>
 
-          {/* Top Right Actions */}
           <div className="flex items-center gap-4">
             
             <div className="relative hidden md:block w-64">
@@ -100,7 +97,6 @@ const AdminLayout = () => {
           </div>
         </div>
 
-        {/* Scrollable Page Content */}
         <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 w-full bg-gray-50/50">
           <Outlet />
         </div>

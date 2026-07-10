@@ -56,7 +56,10 @@ const StationManagementView = () => {
     connectors: '',
     partner: '',
     status: 'Active',
-    image: ''
+    image: '',
+    connectorTypes: [],
+    amenities: [],
+    openHours: '24/7',
   };
   const [formData, setFormData] = useState(initialFormState);
   const [editingId, setEditingId] = useState(null);
@@ -144,28 +147,23 @@ const StationManagementView = () => {
       alert("Please fill all required fields (Name, Location, City, Connectors, Partner).");
       return;
     }
-    
     setActionLoading(true);
     try {
       const token = localStorage.getItem('adminToken');
       const submitData = new FormData();
       Object.keys(formData).forEach(key => {
-        if (formData[key] !== undefined && formData[key] !== '') {
+        if (key === 'connectorTypes' || key === 'amenities') {
+          submitData.append(key, JSON.stringify(formData[key]));
+        } else if (formData[key] !== undefined && formData[key] !== '') {
           submitData.append(key, formData[key]);
         }
       });
-      if (imageFile) {
-        submitData.append('image', imageFile);
-      }
-
+      if (imageFile) submitData.append('image', imageFile);
       const response = await fetch(`${API_BASE_URL}/station`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: submitData
       });
-
       if (!response.ok) throw new Error('Failed to create station');
       toast.success('Station created successfully');
       await fetchStations();
@@ -193,7 +191,10 @@ const StationManagementView = () => {
       connectors: station.connectors || '',
       partner: station.partner || '',
       status: station.status || 'Active',
-      image: station.image || ''
+      image: station.image || '',
+      connectorTypes: station.connectorTypes || [],
+      amenities: station.amenities || [],
+      openHours: station.openHours || '24/7',
     });
     setImageFile(null);
     setIsEditModalOpen(true);
@@ -206,22 +207,18 @@ const StationManagementView = () => {
       const token = localStorage.getItem('adminToken');
       const submitData = new FormData();
       Object.keys(formData).forEach(key => {
-        if (formData[key] !== undefined && formData[key] !== '') {
+        if (key === 'connectorTypes' || key === 'amenities') {
+          submitData.append(key, JSON.stringify(formData[key]));
+        } else if (formData[key] !== undefined && formData[key] !== '') {
           submitData.append(key, formData[key]);
         }
       });
-      if (imageFile) {
-        submitData.append('image', imageFile);
-      }
-
+      if (imageFile) submitData.append('image', imageFile);
       const response = await fetch(`${API_BASE_URL}/station/${editingId}`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: submitData
       });
-
       if (!response.ok) throw new Error('Failed to update station');
       toast.success('Station updated successfully');
       await fetchStations();
@@ -541,6 +538,26 @@ const StationManagementView = () => {
                       <p className="font-semibold text-gray-900 mt-1 text-sm">{stationToView.latitude?.toFixed(4) || 'N/A'}, {stationToView.longitude?.toFixed(4) || 'N/A'}</p>
                     </div>
                   </div>
+                  {stationToView.connectorTypes?.length > 0 && (
+                    <div className="pt-4 border-t border-gray-100">
+                      <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-3">Connector Pricing</p>
+                      <div className="space-y-2">
+                        {stationToView.connectorTypes.map((ct, i) => (
+                          <div key={i} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-2.5 border border-gray-100">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-lg">{ct.chargeType}</span>
+                              <span className="font-semibold text-gray-800 text-sm">{ct.type}</span>
+                              <span className="text-xs text-gray-500">{ct.powerKw} kW</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs text-gray-500">{ct.availableCount}/{ct.totalCount} avail.</span>
+                              <span className="font-bold text-[#8CC63F]">₹{ct.pricePerUnit}/kWh</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -737,6 +754,88 @@ const StationManagementView = () => {
                     </select>
                     <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                   </div>
+                </div>
+
+                {/* Connector Types & Pricing */}
+                <div className="sm:col-span-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider">Connector Types & Pricing</label>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, connectorTypes: [...prev.connectorTypes, { type: 'CCS2', powerKw: 50, pricePerUnit: 18, totalCount: 1, availableCount: 1, chargeType: 'DC' }] }))}
+                      className="flex items-center gap-1 px-3 py-1 bg-[#8CC63F]/10 text-[#8CC63F] rounded-lg text-xs font-bold hover:bg-[#8CC63F]/20"
+                    >
+                      <Plus size={12} /> Add Connector
+                    </button>
+                  </div>
+                  {formData.connectorTypes.length === 0 && (
+                    <p className="text-xs text-gray-400 italic mb-2">No connectors added — add at least one connector with pricing</p>
+                  )}
+                  <div className="space-y-2">
+                    {formData.connectorTypes.map((ct, i) => (
+                      <div key={i} className="grid grid-cols-6 gap-2 bg-gray-50 rounded-xl p-3 border border-gray-100">
+                        <div>
+                          <label className="text-xs text-gray-500">Type</label>
+                          <select value={ct.type} onChange={e => {
+                            const updated = [...formData.connectorTypes];
+                            updated[i] = { ...updated[i], type: e.target.value };
+                            setFormData(p => ({ ...p, connectorTypes: updated }));
+                          }} className="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#8CC63F]">
+                            {['CCS2','CHAdeMO','Type2','AC Type1','GB/T','Bharat AC','Bharat DC'].map(t => <option key={t} value={t}>{t}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500">AC/DC</label>
+                          <select value={ct.chargeType} onChange={e => {
+                            const updated = [...formData.connectorTypes];
+                            updated[i] = { ...updated[i], chargeType: e.target.value };
+                            setFormData(p => ({ ...p, connectorTypes: updated }));
+                          }} className="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#8CC63F]">
+                            <option value="DC">DC</option>
+                            <option value="AC">AC</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500">Power (kW)</label>
+                          <input type="number" value={ct.powerKw} onChange={e => {
+                            const updated = [...formData.connectorTypes];
+                            updated[i] = { ...updated[i], powerKw: parseFloat(e.target.value) || 0 };
+                            setFormData(p => ({ ...p, connectorTypes: updated }));
+                          }} className="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#8CC63F]" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500">₹/kWh</label>
+                          <input type="number" value={ct.pricePerUnit} onChange={e => {
+                            const updated = [...formData.connectorTypes];
+                            updated[i] = { ...updated[i], pricePerUnit: parseFloat(e.target.value) || 0 };
+                            setFormData(p => ({ ...p, connectorTypes: updated }));
+                          }} className="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#8CC63F]" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500">Total</label>
+                          <input type="number" value={ct.totalCount} onChange={e => {
+                            const updated = [...formData.connectorTypes];
+                            updated[i] = { ...updated[i], totalCount: parseInt(e.target.value) || 1, availableCount: parseInt(e.target.value) || 1 };
+                            setFormData(p => ({ ...p, connectorTypes: updated }));
+                          }} className="mt-1 w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-[#8CC63F]" />
+                        </div>
+                        <div className="flex items-end">
+                          <button type="button" onClick={() => setFormData(p => ({ ...p, connectorTypes: p.connectorTypes.filter((_, idx) => idx !== i) }))}
+                            className="w-full py-1.5 bg-red-50 text-red-500 rounded-lg text-xs font-bold hover:bg-red-100">
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Open Hours */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Open Hours</label>
+                  <input type="text" name="openHours" value={formData.openHours} onChange={handleInputChange}
+                    placeholder="e.g. 24/7 or 6AM-10PM"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] shadow-sm" />
                 </div>
 
                 <div className="sm:col-span-2">

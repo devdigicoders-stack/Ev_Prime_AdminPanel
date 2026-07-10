@@ -26,6 +26,12 @@ import ProfileView from './views/profile/ProfileView';
 import OfferManagementView from './views/offers/OfferManagementView';
 import NewsManagementView from './views/news/NewsManagementView';
 import BookingManagementView from './views/bookings/BookingManagementView';
+import EmergencyManagementView from './views/emergency/EmergencyManagementView';
+import ProductManagementView from './views/marketplace/ProductManagementView';
+import OrderManagementView from './views/marketplace/OrderManagementView';
+import CategoryManagementView from './views/marketplace/CategoryManagementView';
+import FeedbackManagementView from './views/feedback/FeedbackManagementView';
+import PricingManagementView from './views/pricing/PricingManagementView';
 import { ThemeProvider } from './contexts/ThemeContext';
 
 function App() {
@@ -45,17 +51,16 @@ function App() {
             boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
           },
           success: {
-            style: { background: '#10b981' } // Emerald-500
+            style: { background: '#10b981' }
           },
           error: {
-            style: { background: '#ef4444' } // Red-500
+            style: { background: '#ef4444' }
           }
         }} 
       />
       <Routes>
         <Route path="/login" element={<LoginView />} />
         
-        {/* Admin Layout Routes */}
         <Route path="/" element={<AdminLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardView />} />
@@ -75,6 +80,7 @@ function App() {
           <Route path="offers" element={<OfferManagementView />} />
           <Route path="news" element={<NewsManagementView />} />
           <Route path="bookings" element={<BookingManagementView />} />
+          <Route path="emergency" element={<EmergencyManagementView />} />
           <Route path="reports" element={<ReportsView />} />
           <Route path="support" element={<SupportCenterView />} />
           <Route path="audit" element={<AuditLogView />} />
@@ -82,10 +88,15 @@ function App() {
           <Route path="settings" element={<SettingsView />} />
           <Route path="notifications" element={<NotificationsView />} />
           <Route path="profile" element={<ProfileView />} />
-          {/* Add more routes here as needed */}
+          {/* Marketplace Routes */}
+          <Route path="marketplace/products" element={<ProductManagementView />} />
+          <Route path="marketplace/orders" element={<OrderManagementView />} />
+          <Route path="marketplace/categories" element={<CategoryManagementView />} />
+          {/* Feedback */}
+          <Route path="feedback" element={<FeedbackManagementView />} />
+          <Route path="pricing" element={<PricingManagementView />} />
         </Route>
 
-        {/* Fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
