@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, ChevronDown, Plus, Edit2, Trash2, ChevronLeft, ChevronRight, X, Loader2, AlertCircle } from 'lucide-react';
+import { Search, ChevronDown, Plus, Edit2, Trash2, ChevronLeft, ChevronRight, X, Loader2, AlertCircle, Key, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -18,6 +18,11 @@ const PartnerManagementView = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [partnerToDelete, setPartnerToDelete] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // History Modal State
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [partnerHistory, setPartnerHistory] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,7 +44,9 @@ const PartnerManagementView = () => {
     email: '',
     phone: '',
     status: 'Active',
-    stationsCount: 0
+    stationsCount: 0,
+    appUsername: '',
+    appPassword: ''
   };
   const [formData, setFormData] = useState(initialFormState);
   const [editingId, setEditingId] = useState(null);
@@ -96,6 +103,7 @@ const PartnerManagementView = () => {
     setActionLoading(true);
     try {
       const token = localStorage.getItem('adminToken');
+      // Step 1: Create Partner
       const response = await fetch(`${API_BASE_URL}/partner`, {
         method: 'POST',
         headers: {
@@ -103,7 +111,11 @@ const PartnerManagementView = () => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          ...formData,
+          name: formData.name,
+          contactPerson: formData.contactPerson,
+          email: formData.email,
+          phone: formData.phone,
+          status: formData.status,
           stationsCount: Number(formData.stationsCount)
         })
       });
@@ -111,6 +123,25 @@ const PartnerManagementView = () => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Failed to create partner');
       
+      // Step 2: Set Credentials if provided
+      if (formData.appUsername && formData.appPassword) {
+        const credResponse = await fetch(`${API_BASE_URL}/partner/${data._id}/credentials`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            appUsername: formData.appUsername,
+            appPassword: formData.appPassword
+          })
+        });
+        if (!credResponse.ok) {
+           const credData = await credResponse.json();
+           toast.error(credData.message || 'Partner created but failed to set credentials');
+        }
+      }
+
       toast.success('Partner created successfully');
       await fetchPartners();
       setIsAddModalOpen(false);
@@ -131,7 +162,9 @@ const PartnerManagementView = () => {
       email: partner.email || '',
       phone: partner.phone || '',
       status: partner.status || 'Active',
-      stationsCount: partner.stationsCount || 0
+      stationsCount: partner.stationsCount || 0,
+      appUsername: partner.appUsername || '',
+      appPassword: ''
     });
     setIsEditModalOpen(true);
   };
@@ -148,13 +181,35 @@ const PartnerManagementView = () => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          ...formData,
+          name: formData.name,
+          contactPerson: formData.contactPerson,
+          email: formData.email,
+          phone: formData.phone,
+          status: formData.status,
           stationsCount: Number(formData.stationsCount)
         })
       });
 
       if (!response.ok) throw new Error('Failed to update partner');
       
+      if (formData.appUsername && formData.appPassword) {
+        const credResponse = await fetch(`${API_BASE_URL}/partner/${editingId}/credentials`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            appUsername: formData.appUsername,
+            appPassword: formData.appPassword
+          })
+        });
+        if (!credResponse.ok) {
+           const credData = await credResponse.json();
+           toast.error(credData.message || 'Partner updated but failed to set credentials');
+        }
+      }
+
       toast.success('Partner updated successfully');
       await fetchPartners();
       setIsEditModalOpen(false);
@@ -163,6 +218,25 @@ const PartnerManagementView = () => {
       toast.error(err.message || 'Failed to update partner');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const fetchPartnerHistory = async (partner) => {
+    setIsHistoryModalOpen(true);
+    setHistoryLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/partner/${partner._id}/history`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to fetch history');
+      setPartnerHistory(data);
+    } catch (err) {
+      toast.error(err.message || 'Failed to fetch history');
+      setIsHistoryModalOpen(false);
+    } finally {
+      setHistoryLoading(false);
     }
   };
 
@@ -318,11 +392,14 @@ const PartnerManagementView = () => {
                     <span className="text-sm font-medium text-gray-600 whitespace-nowrap">{formatDate(partner.createdAt)}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-3">
-                      <button onClick={() => openEditModal(partner)} className="text-gray-400 hover:text-emerald-600 transition-colors p-1.5 rounded-lg hover:bg-emerald-50">
+                    <div className="flex items-center justify-center gap-2">
+                      <button onClick={() => fetchPartnerHistory(partner)} title="View History" className="text-gray-400 hover:text-blue-600 transition-colors p-1.5 rounded-lg hover:bg-blue-50">
+                        <Activity size={16} strokeWidth={2.5} />
+                      </button>
+                      <button onClick={() => openEditModal(partner)} title="Edit Partner" className="text-gray-400 hover:text-emerald-600 transition-colors p-1.5 rounded-lg hover:bg-emerald-50">
                         <Edit2 size={16} strokeWidth={2.5} />
                       </button>
-                      <button onClick={() => confirmDelete(partner)} className="text-gray-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50">
+                      <button onClick={() => confirmDelete(partner)} title="Delete Partner" className="text-gray-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50">
                         <Trash2 size={16} strokeWidth={2.5} />
                       </button>
                     </div>
@@ -488,6 +565,34 @@ const PartnerManagementView = () => {
                     <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
+
+                <div className="sm:col-span-2 pt-2 mt-2 border-t border-gray-100">
+                  <h3 className="text-sm font-semibold text-gray-800 mb-3">App Credentials (Optional)</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">App Username</label>
+                      <input 
+                        type="text" 
+                        name="appUsername"
+                        value={formData.appUsername}
+                        onChange={handleInputChange}
+                        placeholder="e.g. partner_green"
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">{isEditModalOpen ? 'New Password' : 'Password'}</label>
+                      <input 
+                        type="password" 
+                        name="appPassword"
+                        value={formData.appPassword}
+                        onChange={handleInputChange}
+                        placeholder={isEditModalOpen ? "Leave blank to keep current" : "Minimum 6 characters"}
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -546,6 +651,86 @@ const PartnerManagementView = () => {
               >
                 {deleteLoading ? <Loader2 className="animate-spin" size={16} /> : 'Delete Partner'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+      {/* History Modal */}
+      {isHistoryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl my-auto animate-in fade-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl z-10">
+              <h2 className="text-lg font-semibold text-gray-900">Partner History & Stats</h2>
+              <button onClick={() => setIsHistoryModalOpen(false)} className="text-gray-400 hover:bg-gray-100 hover:text-gray-600 p-1.5 rounded-lg transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-6">
+              {historyLoading ? (
+                <div className="flex items-center justify-center py-20">
+                  <Loader2 className="animate-spin text-[#8CC63F]" size={40} />
+                </div>
+              ) : partnerHistory ? (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                      <p className="text-xs text-gray-500 font-semibold uppercase">Total Revenue</p>
+                      <p className="text-2xl font-bold text-gray-900 mt-1">₹{partnerHistory.stats.totalRevenue}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                      <p className="text-xs text-gray-500 font-semibold uppercase">Total Bookings</p>
+                      <p className="text-2xl font-bold text-gray-900 mt-1">{partnerHistory.stats.totalBookings}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                      <p className="text-xs text-gray-500 font-semibold uppercase">Total Stations</p>
+                      <p className="text-2xl font-bold text-gray-900 mt-1">{partnerHistory.stats.totalStations}</p>
+                    </div>
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                      <p className="text-xs text-gray-500 font-semibold uppercase">Active Stations</p>
+                      <p className="text-2xl font-bold text-gray-900 mt-1">{partnerHistory.stats.activeStations}</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-md font-semibold text-gray-900 mb-3">Recent Bookings</h3>
+                    <div className="overflow-x-auto border border-gray-100 rounded-xl">
+                      <table className="w-full text-left border-collapse">
+                        <thead className="bg-gray-50 border-b border-gray-100">
+                          <tr>
+                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">User</th>
+                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Station</th>
+                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
+                            <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {partnerHistory.bookings.slice(0, 5).map(b => (
+                            <tr key={b._id} className="hover:bg-gray-50/50">
+                              <td className="px-4 py-3 text-sm font-medium text-gray-800">{b.user?.name || 'Unknown'}</td>
+                              <td className="px-4 py-3 text-sm text-gray-600">{b.station?.name || 'Unknown'}</td>
+                              <td className="px-4 py-3 text-sm font-semibold text-gray-800">₹{b.estimatedCost || 0}</td>
+                              <td className="px-4 py-3 text-sm">
+                                <span className={`px-2 py-1 rounded-md text-xs font-semibold ${b.paymentStatus === 'Paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                  {b.paymentStatus || 'Pending'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                          {partnerHistory.bookings.length === 0 && (
+                            <tr>
+                              <td colSpan="4" className="px-4 py-8 text-center text-sm text-gray-500">No recent bookings found.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-10 text-center text-gray-500">Failed to load history data.</div>
+              )}
             </div>
           </div>
         </div>
