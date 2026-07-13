@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, ChevronDown, Plus, Edit2, Trash2, ChevronLeft, ChevronRight, X, Loader2, AlertCircle, Key, Activity } from 'lucide-react';
+import { Search, ChevronDown, Plus, Edit2, Trash2, ChevronLeft, ChevronRight, X, Loader2, AlertCircle, Key, Activity, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -693,6 +693,42 @@ const PartnerManagementView = () => {
                     </div>
                   </div>
                   
+                  {/* Stations List */}
+                  <div>
+                    <h3 className="text-md font-semibold text-gray-900 mb-3">Partner's Stations</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {partnerHistory.stations && partnerHistory.stations.length > 0 ? (
+                        partnerHistory.stations.map(station => (
+                          <div key={station._id} className="bg-white border border-gray-100 shadow-sm p-4 rounded-xl flex flex-col justify-between hover:border-[#8CC63F] transition-colors">
+                            <div>
+                              <div className="flex justify-between items-start mb-2">
+                                <h4 className="font-bold text-gray-800 text-sm line-clamp-1">{station.name}</h4>
+                                <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${
+                                  station.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 
+                                  station.status === 'Maintenance' ? 'bg-amber-100 text-amber-700' : 
+                                  'bg-red-100 text-red-700'
+                                }`}>
+                                  {station.status || 'Unknown'}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                                <MapPin size={12} /> {station.location || 'N/A'}, {station.city || 'N/A'}
+                              </p>
+                            </div>
+                            <div className="mt-3 pt-3 border-t border-gray-50 flex justify-between items-center text-xs">
+                              <span className="text-gray-600 font-medium">{station.connectors || 0} Connectors</span>
+                              <span className="text-gray-600 font-medium">{station.powerCapacity || 0} kW Capacity</span>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="col-span-full py-6 text-center text-sm text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                          No stations assigned to this partner yet.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div>
                     <h3 className="text-md font-semibold text-gray-900 mb-3">Recent Bookings</h3>
                     <div className="overflow-x-auto border border-gray-100 rounded-xl">
