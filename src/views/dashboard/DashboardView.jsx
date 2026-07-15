@@ -103,8 +103,8 @@ const DashboardView = () => {
         <StatCard title="Total Sessions" value={stats.totalSessions.toLocaleString()} growth={stats.sessionsGrowth} icon={Zap} />
         <StatCard title="Total Energy (kWh)" value={stats.totalEnergy.toLocaleString()} growth={stats.energyGrowth} icon={Zap} />
         <StatCard title="CO₂ Saved (Tons)" value={stats.co2Saved.toLocaleString()} growth={stats.co2Growth} icon={Leaf} />
-        <StatCard title="Total Revenue" value={`₹${stats.totalRevenue.toLocaleString()}`} growth={stats.revenueGrowth} />
-        <StatCard title="Market Revenue" value={`₹${(stats.marketRevenue || 0).toLocaleString()}`} icon={ShoppingBag} />
+        <StatCard title="Station Revenue" value={`₹${stats.totalRevenue.toLocaleString()}`} growth={stats.revenueGrowth} />
+        <StatCard title="Marketplace Revenue" value={`₹${(stats.marketRevenue || 0).toLocaleString()}`} icon={ShoppingBag} />
       </div>
 
       {/* --- CHARTS ROW 1 --- */}
