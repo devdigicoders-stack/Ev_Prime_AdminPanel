@@ -121,7 +121,7 @@ const TicketManagementView = () => {
     const headers = ['Ticket ID', 'User', 'Subject', 'Category', 'Priority', 'Status', 'Created On'];
     const rows = tickets.map(t => [
       t.ticketId,
-      t.user,
+      t.user?.name || t.user,
       t.subject,
       t.category,
       t.priority,
@@ -238,7 +238,7 @@ const TicketManagementView = () => {
                       <span className="text-sm font-semibold text-gray-800 whitespace-nowrap">{ticket.ticketId}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm font-medium text-gray-600 whitespace-nowrap">{ticket.user}</span>
+                      <span className="text-sm font-medium text-gray-600 whitespace-nowrap">{ticket.user?.name || ticket.user}</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-sm font-semibold text-gray-800 whitespace-nowrap max-w-[200px] truncate block">{ticket.subject}</span>
