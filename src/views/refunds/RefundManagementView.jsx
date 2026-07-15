@@ -67,7 +67,7 @@ const RefundManagementView = () => {
 
   // Filtered Data
   const filteredRefunds = refunds.filter(refund => {
-    const searchString = `${refund.refundId} ${refund.user}`.toLowerCase();
+    const searchString = `${refund.refundId} ${refund.user?.name || refund.user} ${refund.booking?.bookingId || ''}`.toLowerCase();
     const matchesSearch = searchString.includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'All' || refund.status === statusFilter;
     return matchesSearch && matchesStatus;
@@ -226,7 +226,7 @@ const RefundManagementView = () => {
                     <span className="text-sm font-semibold text-gray-800">{refund.refundId}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm font-medium text-gray-600">{refund.user}</span>
+                    <span className="text-sm font-medium text-gray-600">{refund.user?.name || refund.user}</span>
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm font-semibold text-gray-800">₹{refund.amount?.toLocaleString()}</span>
@@ -338,8 +338,12 @@ const RefundManagementView = () => {
                   <span className="text-sm font-semibold text-gray-900">{selectedRefund.refundId}</span>
                 </div>
                 <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                  <span className="text-sm text-gray-500 font-medium">Booking ID</span>
+                  <span className="text-sm font-semibold text-gray-900">{selectedRefund.booking?.bookingId || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between items-center pb-3 border-b border-gray-200">
                   <span className="text-sm text-gray-500 font-medium">User</span>
-                  <span className="text-sm font-semibold text-gray-900">{selectedRefund.user}</span>
+                  <span className="text-sm font-semibold text-gray-900">{selectedRefund.user?.name || selectedRefund.user}</span>
                 </div>
                 <div className="flex justify-between items-center pb-3 border-b border-gray-200">
                   <span className="text-sm text-gray-500 font-medium">Amount</span>

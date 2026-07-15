@@ -97,13 +97,13 @@ const DashboardView = () => {
 
       {/* --- STATS GRID --- */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-        <StatCard title="Total Users" value={stats.totalUsers.toLocaleString()} growth="12.5%" />
-        <StatCard title="Total Stations" value={stats.totalStations.toLocaleString()} growth="8.2%" />
-        <StatCard title="Total Partners" value={stats.totalPartners.toLocaleString()} growth="15.3%" />
-        <StatCard title="Total Sessions" value={stats.totalSessions.toLocaleString()} growth="14.6%" icon={Zap} />
-        <StatCard title="Total Energy (kWh)" value={stats.totalEnergy.toLocaleString()} growth="16.8%" icon={Zap} />
-        <StatCard title="CO₂ Saved (Tons)" value={stats.co2Saved.toLocaleString()} growth="18.3%" icon={Leaf} />
-        <StatCard title="Total Revenue" value={`₹${stats.totalRevenue.toLocaleString()}`} growth="19.2%" />
+        <StatCard title="Total Users" value={stats.totalUsers.toLocaleString()} growth={stats.usersGrowth} />
+        <StatCard title="Total Stations" value={stats.totalStations.toLocaleString()} growth={stats.stationsGrowth} />
+        <StatCard title="Total Partners" value={stats.totalPartners.toLocaleString()} growth={stats.partnersGrowth} />
+        <StatCard title="Total Sessions" value={stats.totalSessions.toLocaleString()} growth={stats.sessionsGrowth} icon={Zap} />
+        <StatCard title="Total Energy (kWh)" value={stats.totalEnergy.toLocaleString()} growth={stats.energyGrowth} icon={Zap} />
+        <StatCard title="CO₂ Saved (Tons)" value={stats.co2Saved.toLocaleString()} growth={stats.co2Growth} icon={Leaf} />
+        <StatCard title="Total Revenue" value={`₹${stats.totalRevenue.toLocaleString()}`} growth={stats.revenueGrowth} />
       </div>
 
       {/* --- CHARTS ROW 1 --- */}
