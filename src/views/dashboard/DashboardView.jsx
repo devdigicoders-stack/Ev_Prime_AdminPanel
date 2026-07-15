@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ChevronDown, ArrowUpRight, 
-  UserPlus, Zap, Wallet, RotateCcw, Handshake, Leaf, Loader2
+  UserPlus, Zap, Wallet, RotateCcw, Handshake, Leaf, Loader2, ShoppingBag
 } from 'lucide-react';
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -11,7 +11,7 @@ import {
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const iconMap = {
-  UserPlus, Zap, Wallet, RotateCcw, Handshake, Leaf
+  UserPlus, Zap, Wallet, RotateCcw, Handshake, Leaf, ShoppingBag
 };
 
 const StatCard = ({ title, value, growth, icon: Icon }) => (
@@ -104,6 +104,7 @@ const DashboardView = () => {
         <StatCard title="Total Energy (kWh)" value={stats.totalEnergy.toLocaleString()} growth={stats.energyGrowth} icon={Zap} />
         <StatCard title="CO₂ Saved (Tons)" value={stats.co2Saved.toLocaleString()} growth={stats.co2Growth} icon={Leaf} />
         <StatCard title="Total Revenue" value={`₹${stats.totalRevenue.toLocaleString()}`} growth={stats.revenueGrowth} />
+        <StatCard title="Market Revenue" value={`₹${(stats.marketRevenue || 0).toLocaleString()}`} icon={ShoppingBag} />
       </div>
 
       {/* --- CHARTS ROW 1 --- */}
