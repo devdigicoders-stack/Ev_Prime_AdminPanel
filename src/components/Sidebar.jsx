@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { NavLink, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useTheme } from '../contexts/ThemeContext';
 import { 
   LayoutDashboard, Users, Handshake, Store, Wallet, RotateCcw, 
   BrainCircuit, Leaf, Landmark, Map, Building, FileText, Headphones, 
@@ -12,6 +13,18 @@ import {
 
 const Sidebar = ({ onClose }) => {
   const navigate = useNavigate();
+  const { themeMode } = useTheme();
+  const [isSystemDark, setIsSystemDark] = useState(false);
+  
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    setIsSystemDark(mediaQuery.matches);
+    const handler = (e) => setIsSystemDark(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
+  const isDarkMode = themeMode === 'dark' || (themeMode === 'system' && isSystemDark);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
 
@@ -95,7 +108,11 @@ const Sidebar = ({ onClose }) => {
         {/* Logo */}
         <div className="p-3 flex items-start justify-between border-b border-gray-100 mb-2">
           <div className="flex items-center gap-3">
-            <img src="/logo/Black%20No%20Background.png" alt="E-Bharat Logo" className="w-[68px] h-[68px] object-contain flex-shrink-0" />
+            {isDarkMode ? (
+              <img src="/logo.png" alt="E-Bharat Logo" className="w-[68px] h-[68px] object-contain flex-shrink-0" />
+            ) : (
+              <img src="/logo/Black%20No%20Background.png" alt="E-Bharat Logo" className="w-[68px] h-[68px] object-contain flex-shrink-0" />
+            )}
             <div className="flex flex-col">
               <div className="flex items-center gap-1 font-semibold text-xl tracking-tight text-gray-900">
                 e-Bharat <span className="bg-[#ED811B] text-white px-1.5 py-0.5 rounded text-xs ml-0.5 mt-0.5">EV</span>
