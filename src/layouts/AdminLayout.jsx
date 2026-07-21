@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { Menu, Search, Bell, User } from 'lucide-react';
+import { useNotification } from '../contexts/NotificationContext';
 
 const routeTitles = {
   '/dashboard': 'DASHBOARD',
@@ -37,6 +38,7 @@ const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const currentTitle = routeTitles[location.pathname] || 'ADMIN PANEL';
+  const { unreadCount } = useNotification();
 
   return (
     <div className="flex h-screen w-full bg-gray-50 overflow-hidden font-sans">
@@ -85,9 +87,11 @@ const AdminLayout = () => {
 
             <button onClick={() => navigate('/notifications')} className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
               <Bell size={20} />
-              <span className="absolute top-1 right-1 w-4 h-4 bg-orange-500 text-white text-[10px] font-semibold flex items-center justify-center rounded-full border-2 border-white">
-                8
-              </span>
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 w-4 h-4 bg-orange-500 text-white text-[10px] font-semibold flex items-center justify-center rounded-full border-2 border-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
 
             <div onClick={() => navigate('/profile')} className="w-9 h-9 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center cursor-pointer text-[#8CC63F] hover:bg-emerald-100 transition-colors">
