@@ -124,7 +124,7 @@ const Sidebar = ({ onClose }) => {
             {isDarkMode ? (
               <img src="/logo.png" alt="E-Bharat Logo" className="w-[68px] h-[68px] object-contain flex-shrink-0" />
             ) : (
-              <img src="/logo/Black%20No%20Background.png" alt="E-Bharat Logo" className="w-[68px] h-[68px] object-contain flex-shrink-0" />
+              <img src="/logo/2nd%20Theme%20No%20Background.png" alt="E-Bharat Logo" className="w-[68px] h-[68px] object-contain flex-shrink-0" />
             )}
             <div className="flex flex-col">
               <div className="flex items-center gap-1 font-semibold text-xl tracking-tight text-gray-900">
