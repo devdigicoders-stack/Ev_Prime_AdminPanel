@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { Menu, Search, Bell, User } from 'lucide-react';
 import { useNotification } from '../contexts/NotificationContext';
+import { requestFirebaseNotificationPermission, setupOnMessageListener } from '../firebase';
+import { toast } from 'react-hot-toast';
 
 const routeTitles = {
   '/dashboard': 'DASHBOARD',
@@ -33,6 +35,69 @@ const routeTitles = {
   '/marketplace/categories': 'CATEGORY MANAGEMENT',
 };
 
+function FirebaseSetup() {
+  const { addNotification } = useNotification();
+
+  useEffect(() => {
+    const initFirebase = async () => {
+      const adminToken = localStorage.getItem('adminToken');
+      if (!adminToken) return; // Ensure we only generate token if logged in
+
+      const token = await requestFirebaseNotificationPermission();
+      if (token) {
+        console.log("🔥 FCM Token generated successfully. Copy this for Firebase testing:", token);
+        try {
+          await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/update-fcm-token`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${adminToken}`
+            },
+            body: JSON.stringify({ fcmToken: token })
+          });
+        } catch (error) {
+          console.error('Failed to update FCM token', error);
+        }
+      }
+    };
+    
+    initFirebase();
+
+    const unsubscribe = setupOnMessageListener((payload) => {
+      console.log('Foreground message received: ', payload);
+      const title = payload.notification?.title || 'Notification';
+      const body = payload.notification?.body || '';
+      
+      const newNotification = {
+        _id: payload.data?.notificationId || Date.now().toString(),
+        title,
+        body,
+        type: payload.data?.type || 'alert',
+        isRead: false,
+        createdAt: new Date().toISOString()
+      };
+      
+      addNotification(newNotification);
+
+      toast(`${title}\n${body}`, {
+        icon: '🔔',
+        style: {
+          borderRadius: '10px',
+          background: '#333',
+          color: '#fff',
+        },
+        duration: 5000,
+      });
+    });
+
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [addNotification]);
+
+  return null;
+}
+
 const AdminLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
@@ -42,7 +107,7 @@ const AdminLayout = () => {
 
   return (
     <div className="flex h-screen w-full bg-gray-50 overflow-hidden font-sans">
-      
+      <FirebaseSetup />
       {isMobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity"

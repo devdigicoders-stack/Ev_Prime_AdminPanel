@@ -69,8 +69,21 @@ const Sidebar = ({ onClose }) => {
 
   const handleLogoutClick = () => setIsLogoutModalOpen(true);
 
-  const confirmLogout = () => {
+  const confirmLogout = async () => {
     setIsLogoutModalOpen(false);
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      try {
+        await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/fcm-token`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (err) {
+        console.error('Failed to unlink FCM token on logout:', err);
+      }
+    }
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminData');
     toast.success('Logged out securely');

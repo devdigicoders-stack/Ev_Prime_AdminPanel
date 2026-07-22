@@ -1,7 +1,5 @@
-import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster, toast } from 'react-hot-toast';
-import { requestFirebaseNotificationPermission, setupOnMessageListener } from './firebase';
+import { Toaster } from 'react-hot-toast';
 import LoginView from './views/auth/LoginView';
 import AdminLayout from './layouts/AdminLayout';
 import DashboardView from './views/dashboard/DashboardView';
@@ -37,74 +35,10 @@ import PricingManagementView from './views/pricing/PricingManagementView';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 
-function FirebaseSetup() {
-  const { addNotification } = useNotification();
-
-  useEffect(() => {
-    const initFirebase = async () => {
-      const token = await requestFirebaseNotificationPermission();
-      if (token) {
-        const adminToken = localStorage.getItem('adminToken');
-        if (adminToken) {
-          try {
-            await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/update-fcm-token`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${adminToken}`
-              },
-              body: JSON.stringify({ fcmToken: token })
-            });
-          } catch (error) {
-            console.error('Failed to update FCM token', error);
-          }
-        }
-      }
-    };
-    
-    initFirebase();
-
-    const unsubscribe = setupOnMessageListener((payload) => {
-      console.log('Foreground message received: ', payload);
-      const title = payload.notification?.title || 'Notification';
-      const body = payload.notification?.body || '';
-      
-      // We reconstruct a notification object to match backend schema
-      const newNotification = {
-        _id: payload.data?.notificationId || Date.now().toString(),
-        title,
-        body,
-        type: payload.data?.type || 'alert',
-        isRead: false,
-        createdAt: new Date().toISOString()
-      };
-      
-      addNotification(newNotification);
-
-      toast(`${title}\n${body}`, {
-        icon: '🔔',
-        style: {
-          borderRadius: '10px',
-          background: '#333',
-          color: '#fff',
-        },
-        duration: 5000,
-      });
-    });
-
-    return () => {
-      if (typeof unsubscribe === 'function') unsubscribe();
-    };
-  }, [addNotification]);
-
-  return null;
-}
-
 function App() {
   return (
     <ThemeProvider>
       <NotificationProvider>
-        <FirebaseSetup />
         <Router>
         <Toaster 
         position="top-right" 
