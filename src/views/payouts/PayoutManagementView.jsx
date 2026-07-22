@@ -58,8 +58,8 @@ const PayoutManagementView = () => {
 
   const getStatusBadge = (status) => {
     switch(status) {
-      case 'Approved':
-        return <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold flex items-center gap-1 w-max"><Check size={14} /> Approved</span>;
+      case 'Completed':
+        return <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold flex items-center gap-1 w-max"><Check size={14} /> Completed</span>;
       case 'Rejected':
         return <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold flex items-center gap-1 w-max"><X size={14} /> Rejected</span>;
       default:
@@ -142,9 +142,9 @@ const PayoutManagementView = () => {
                       {payout.status === 'Pending' && (
                         <div className="flex items-center gap-2">
                           <button 
-                            onClick={() => updateStatus(payout._id, 'Approved')}
+                            onClick={() => updateStatus(payout._id, 'Completed')}
                             className="p-2 bg-green-50 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
-                            title="Approve"
+                            title="Complete Payout"
                           >
                             <Check size={18} />
                           </button>
