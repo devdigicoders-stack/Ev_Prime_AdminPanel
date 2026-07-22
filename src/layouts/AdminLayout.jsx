@@ -13,6 +13,7 @@ const routeTitles = {
   '/partners': 'PARTNER MANAGEMENT',
   '/franchise': 'FRANCHISE MANAGEMENT',
   '/payments': 'PAYMENT MONITORING',
+  '/payouts': 'PAYOUT REQUESTS',
   '/refunds': 'REFUND MANAGEMENT',
   '/analytics': 'AI ANALYTICS',
   '/carbon': 'CARBON DASHBOARD',

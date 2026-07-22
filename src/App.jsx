@@ -32,6 +32,7 @@ import OrderManagementView from './views/marketplace/OrderManagementView';
 import CategoryManagementView from './views/marketplace/CategoryManagementView';
 import FeedbackManagementView from './views/feedback/FeedbackManagementView';
 import PricingManagementView from './views/pricing/PricingManagementView';
+import PayoutManagementView from './views/payouts/PayoutManagementView';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 
@@ -97,6 +98,7 @@ function App() {
           {/* Feedback */}
           <Route path="feedback" element={<FeedbackManagementView />} />
           <Route path="pricing" element={<PricingManagementView />} />
+          <Route path="payouts" element={<PayoutManagementView />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
