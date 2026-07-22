@@ -353,6 +353,33 @@ const RefundManagementView = () => {
                   <span className="text-sm text-gray-500 font-medium">Reason</span>
                   <span className="text-sm font-medium text-gray-800">{selectedRefund.reason}</span>
                 </div>
+                
+                <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                  <span className="text-sm text-gray-500 font-medium">Destination</span>
+                  <span className="text-sm font-bold text-gray-800 capitalize">
+                    {selectedRefund.refundDestination === 'bank_transfer' ? 'Bank Transfer' : 
+                     selectedRefund.refundDestination === 'upi' ? 'UPI' : 'Wallet'}
+                  </span>
+                </div>
+
+                {selectedRefund.refundDestination === 'bank_transfer' && selectedRefund.bankDetails && (
+                  <div className="pb-3 border-b border-gray-200 space-y-2">
+                    <span className="text-sm text-gray-500 font-medium block">Bank Details</span>
+                    <div className="bg-white p-3 rounded-lg border border-gray-100 space-y-1">
+                      <div className="flex justify-between"><span className="text-xs text-gray-500">Name</span><span className="text-xs font-semibold">{selectedRefund.bankDetails.accountName}</span></div>
+                      <div className="flex justify-between"><span className="text-xs text-gray-500">A/C No</span><span className="text-xs font-semibold">{selectedRefund.bankDetails.accountNumber}</span></div>
+                      <div className="flex justify-between"><span className="text-xs text-gray-500">IFSC</span><span className="text-xs font-semibold">{selectedRefund.bankDetails.ifsc}</span></div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedRefund.refundDestination === 'upi' && selectedRefund.upiDetails && (
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-200">
+                    <span className="text-sm text-gray-500 font-medium">UPI ID</span>
+                    <span className="text-sm font-semibold text-gray-800">{selectedRefund.upiDetails.upiId}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-500 font-medium">Current Status</span>
                   <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${getStatusColor(selectedRefund.status)}`}>
