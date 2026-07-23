@@ -3,7 +3,7 @@ import {
   Search, ChevronDown, Trash2, ChevronLeft, ChevronRight, Loader2, 
   AlertCircle, X, Eye, Lock, Unlock, ShieldAlert, CheckCircle2, XCircle, 
   Wallet, RotateCcw, Zap, User, Car, FileText, Leaf, Award, 
-  ArrowUpRight, ArrowDownLeft, Calendar, Clock, DollarSign, AlertTriangle, ExternalLink
+  ArrowUpRight, ArrowDownLeft, Calendar, Clock, DollarSign, AlertTriangle, ExternalLink, Square, Play
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -247,6 +247,39 @@ const UserManagementView = () => {
       toast.error('Failed to fetch wallet information');
     } finally {
       setWalletLoading(false);
+    }
+  };
+
+  // Remote Charging Control (Start / Stop)
+  const handleStartChargingRemote = async (bookingId) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API_BASE_URL}/booking/${bookingId}/start-charging`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to start charging');
+      toast.success('Charging session started remotely! ⚡');
+      if (selectedUser) fetchChargingHistory(selectedUser._id);
+    } catch (err) {
+      toast.error(err.message || 'Failed to start charging');
+    }
+  };
+
+  const handleStopChargingRemote = async (bookingId) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API_BASE_URL}/booking/${bookingId}/stop-charging`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to stop charging');
+      toast.success('Charging session stopped & completed remotely! ✅');
+      if (selectedUser) fetchChargingHistory(selectedUser._id);
+    } catch (err) {
+      toast.error(err.message || 'Failed to stop charging');
     }
   };
 
@@ -847,7 +880,8 @@ const UserManagementView = () => {
                                   <th className="px-4 py-3">Duration</th>
                                   <th className="px-4 py-3">Energy</th>
                                   <th className="px-4 py-3">Amount</th>
-                                  <th className="px-4 py-3 text-right">Status</th>
+                                  <th className="px-4 py-3">Status</th>
+                                  <th className="px-4 py-3 text-right">Remote Control</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-50 text-xs">
@@ -869,14 +903,33 @@ const UserManagementView = () => {
                                     <td className="px-4 py-3 font-bold text-gray-900">
                                       ₹{session.totalAmount || session.amount || 0}
                                     </td>
-                                    <td className="px-4 py-3 text-right">
+                                    <td className="px-4 py-3">
                                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold capitalize ${
                                         session.status === 'Completed' || session.status === 'completed' ? 'bg-emerald-50 text-emerald-600' :
-                                        session.status === 'Ongoing' || session.status === 'ongoing' ? 'bg-blue-50 text-blue-600' :
+                                        session.status === 'Ongoing' || session.status === 'ongoing' ? 'bg-blue-50 text-blue-600 animate-pulse' :
                                         'bg-red-50 text-red-600'
                                       }`}>
                                         {session.status || 'Completed'}
                                       </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-right">
+                                      {session.status === 'Confirmed' || session.status === 'Pending' ? (
+                                        <button
+                                          onClick={() => handleStartChargingRemote(session._id)}
+                                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] rounded-lg transition shadow-sm flex items-center gap-1 ml-auto cursor-pointer"
+                                        >
+                                          <Zap size={12} /> Start Charging
+                                        </button>
+                                      ) : session.status === 'Ongoing' ? (
+                                        <button
+                                          onClick={() => handleStopChargingRemote(session._id)}
+                                          className="px-2.5 py-1 bg-red-500 hover:bg-red-600 text-white font-bold text-[10px] rounded-lg transition shadow-sm flex items-center gap-1 ml-auto cursor-pointer"
+                                        >
+                                          <Square size={12} /> Stop Charging
+                                        </button>
+                                      ) : (
+                                        <span className="text-[10px] font-medium text-gray-400">Session Ended</span>
+                                      )}
                                     </td>
                                   </tr>
                                 ))}
