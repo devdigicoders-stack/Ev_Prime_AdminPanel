@@ -7,6 +7,19 @@ import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -97,14 +110,15 @@ const DashboardView = () => {
 
       {/* --- STATS GRID --- */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
+        <StatCard title="Total Revenue" value={`₹${stats.totalRevenue.toLocaleString()}`} growth={stats.revenueGrowth} />
+        <StatCard title="Today's Revenue" value={`₹${(stats.todayRevenue || 0).toLocaleString()}`} />
+        <StatCard title="Active Chargers" value={stats.activeStations} icon={Zap} />
+        <StatCard title="Offline Chargers" value={stats.offlineStations} />
+        
+        <StatCard title="Today's Sessions" value={stats.todaySessions} icon={Zap} />
+        <StatCard title="Today's Energy (kWh)" value={stats.todayEnergy} icon={Zap} />
         <StatCard title="Total Users" value={stats.totalUsers.toLocaleString()} growth={stats.usersGrowth} />
-        <StatCard title="Total Stations" value={stats.totalStations.toLocaleString()} growth={stats.stationsGrowth} />
-        <StatCard title="Total Partners" value={stats.totalPartners.toLocaleString()} growth={stats.partnersGrowth} />
-        <StatCard title="Total Sessions" value={stats.totalSessions.toLocaleString()} growth={stats.sessionsGrowth} icon={Zap} />
-        <StatCard title="Total Energy (kWh)" value={stats.totalEnergy.toLocaleString()} growth={stats.energyGrowth} icon={Zap} />
         <StatCard title="CO₂ Saved (Tons)" value={stats.co2Saved.toLocaleString()} growth={stats.co2Growth} icon={Leaf} />
-        <StatCard title="Station Revenue" value={`₹${stats.totalRevenue.toLocaleString()}`} growth={stats.revenueGrowth} />
-        <StatCard title="Marketplace Revenue" value={`₹${(stats.marketRevenue || 0).toLocaleString()}`} icon={ShoppingBag} />
       </div>
 
       {/* --- CHARTS ROW 1 --- */}
@@ -153,6 +167,73 @@ const DashboardView = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* --- REAL-TIME MAP VIEW --- */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">Real-Time Chargers Map</h3>
+          <div className="flex items-center gap-2">
+            <span className="flex items-center text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-1 rounded">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span> Online
+            </span>
+            <span className="flex items-center text-xs text-red-600 font-medium bg-red-50 px-2 py-1 rounded">
+              <span className="w-2 h-2 rounded-full bg-red-500 mr-1.5"></span> Offline
+            </span>
+          </div>
+        </div>
+        
+        <div className="h-[400px] w-full rounded-xl overflow-hidden border border-gray-200 relative z-0">
+          <MapContainer 
+            center={[20.5937, 78.9629]} 
+            zoom={4} 
+            style={{ height: '100%', width: '100%', zIndex: 0 }}
+          >
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            />
+            {stats.mapData && stats.mapData.map((station) => {
+              if (!station.latitude || !station.longitude) return null;
+              
+              // Determine if we should use a custom red icon for offline
+              const isOffline = station.status === 'Offline' || station.status === 'Maintenance';
+              const markerIcon = isOffline ? new L.Icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+              }) : DefaultIcon;
+
+              return (
+                <Marker 
+                  key={station._id} 
+                  position={[station.latitude, station.longitude]}
+                  icon={markerIcon}
+                >
+                  <Popup>
+                    <div className="p-1">
+                      <h4 className="font-bold text-gray-900">{station.name}</h4>
+                      <p className="text-xs text-gray-600 mt-1">{station.location || station.city}</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isOffline ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                          {station.status}
+                        </span>
+                        {station.connectorTypes && station.connectorTypes.length > 0 && (
+                          <span className="text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+                            {station.connectorTypes[0].type}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            })}
+          </MapContainer>
+        </div>
       </div>
 
       {/* --- CHARTS ROW 2 --- */}
