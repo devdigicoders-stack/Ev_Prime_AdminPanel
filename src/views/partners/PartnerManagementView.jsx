@@ -283,7 +283,28 @@ const PartnerManagementView = () => {
     switch (status) {
       case 'Active': return 'text-emerald-500';
       case 'Blocked': return 'text-red-500';
+      case 'Pending': return 'text-amber-500';
+      case 'Rejected': return 'text-gray-500';
       default: return 'text-gray-500';
+    }
+  };
+
+  const handleUpdateStatus = async (partnerId, newStatus) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/partner/${partnerId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (!response.ok) throw new Error(`Failed to update status`);
+      toast.success(`Partner marked as ${newStatus}`);
+      await fetchPartners();
+    } catch (err) {
+      toast.error(err.message);
     }
   };
 
@@ -323,6 +344,8 @@ const PartnerManagementView = () => {
               >
                 <option value="All">All Status</option>
                 <option value="Active">Active</option>
+                <option value="Pending">Pending</option>
+                <option value="Rejected">Rejected</option>
                 <option value="Blocked">Blocked</option>
               </select>
               <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
@@ -393,6 +416,16 @@ const PartnerManagementView = () => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2">
+                      {partner.status === 'Pending' && (
+                        <>
+                          <button onClick={() => handleUpdateStatus(partner._id, 'Active')} title="Approve" className="text-emerald-500 hover:text-emerald-600 transition-colors p-1.5 rounded-lg hover:bg-emerald-50 text-xs font-semibold">
+                            Approve
+                          </button>
+                          <button onClick={() => handleUpdateStatus(partner._id, 'Rejected')} title="Reject" className="text-red-500 hover:text-red-600 transition-colors p-1.5 rounded-lg hover:bg-red-50 text-xs font-semibold">
+                            Reject
+                          </button>
+                        </>
+                      )}
                       <button onClick={() => fetchPartnerHistory(partner)} title="View History" className="text-gray-400 hover:text-blue-600 transition-colors p-1.5 rounded-lg hover:bg-blue-50">
                         <Activity size={16} strokeWidth={2.5} />
                       </button>
@@ -560,6 +593,8 @@ const PartnerManagementView = () => {
                       className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm appearance-none bg-white"
                     >
                       <option value="Active">Active</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Rejected">Rejected</option>
                       <option value="Blocked">Blocked</option>
                     </select>
                     <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
