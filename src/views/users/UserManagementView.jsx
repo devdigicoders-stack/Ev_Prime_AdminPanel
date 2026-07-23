@@ -7,12 +7,20 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
+const getMediaUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace('/api', '');
+  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+};
 
 const UserManagementView = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
 
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
@@ -1006,16 +1014,32 @@ const UserManagementView = () => {
                                   <span className="text-xs font-mono text-gray-500 font-semibold">{kycData?.aadhaarNumber || 'Not provided'}</span>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
-                                  <div className="relative group border border-gray-100 rounded-xl overflow-hidden bg-gray-50 aspect-video flex items-center justify-center">
+                                  <div 
+                                    onClick={() => kycData?.aadhaarFront && setPreviewImage({ url: getMediaUrl(kycData.aadhaarFront), title: 'Aadhaar Card (Front)' })}
+                                    className="relative group border border-gray-200 rounded-xl overflow-hidden bg-gray-50 aspect-video flex items-center justify-center cursor-pointer hover:border-emerald-500 transition"
+                                  >
                                     {kycData?.aadhaarFront ? (
-                                      <img src={getMediaUrl(kycData.aadhaarFront)} alt="Aadhaar Front" className="w-full h-full object-cover group-hover:scale-105 transition" />
+                                      <>
+                                        <img src={getMediaUrl(kycData.aadhaarFront)} alt="Aadhaar Front" className="w-full h-full object-contain p-1 group-hover:scale-105 transition" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white text-xs font-bold gap-1">
+                                          <Eye size={16} /> Click to View
+                                        </div>
+                                      </>
                                     ) : (
                                       <div className="text-[10px] text-gray-400 font-medium">Front Image N/A</div>
                                     )}
                                   </div>
-                                  <div className="relative group border border-gray-100 rounded-xl overflow-hidden bg-gray-50 aspect-video flex items-center justify-center">
+                                  <div 
+                                    onClick={() => kycData?.aadhaarBack && setPreviewImage({ url: getMediaUrl(kycData.aadhaarBack), title: 'Aadhaar Card (Back)' })}
+                                    className="relative group border border-gray-200 rounded-xl overflow-hidden bg-gray-50 aspect-video flex items-center justify-center cursor-pointer hover:border-emerald-500 transition"
+                                  >
                                     {kycData?.aadhaarBack ? (
-                                      <img src={getMediaUrl(kycData.aadhaarBack)} alt="Aadhaar Back" className="w-full h-full object-cover group-hover:scale-105 transition" />
+                                      <>
+                                        <img src={getMediaUrl(kycData.aadhaarBack)} alt="Aadhaar Back" className="w-full h-full object-contain p-1 group-hover:scale-105 transition" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white text-xs font-bold gap-1">
+                                          <Eye size={16} /> Click to View
+                                        </div>
+                                      </>
                                     ) : (
                                       <div className="text-[10px] text-gray-400 font-medium">Back Image N/A</div>
                                     )}
@@ -1029,9 +1053,17 @@ const UserManagementView = () => {
                                   <h5 className="text-xs font-bold text-gray-900 uppercase tracking-wider">PAN Card</h5>
                                   <span className="text-xs font-mono text-gray-500 font-semibold">{kycData?.panNumber || 'Not provided'}</span>
                                 </div>
-                                <div className="relative group border border-gray-100 rounded-xl overflow-hidden bg-gray-50 aspect-video flex items-center justify-center">
+                                <div 
+                                  onClick={() => kycData?.panImage && setPreviewImage({ url: getMediaUrl(kycData.panImage), title: 'PAN Card' })}
+                                  className="relative group border border-gray-200 rounded-xl overflow-hidden bg-gray-50 aspect-video flex items-center justify-center cursor-pointer hover:border-emerald-500 transition"
+                                >
                                   {kycData?.panImage ? (
-                                    <img src={getMediaUrl(kycData.panImage)} alt="PAN Card" className="w-full h-full object-cover group-hover:scale-105 transition" />
+                                    <>
+                                      <img src={getMediaUrl(kycData.panImage)} alt="PAN Card" className="w-full h-full object-contain p-1 group-hover:scale-105 transition" />
+                                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition text-white text-xs font-bold gap-1">
+                                        <Eye size={16} /> Click to View
+                                      </div>
+                                    </>
                                   ) : (
                                     <div className="text-[10px] text-gray-400 font-medium">PAN Image N/A</div>
                                   )}
@@ -1238,6 +1270,23 @@ const UserManagementView = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Image Lightbox Preview Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setPreviewImage(null)}>
+          <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
+              <h4 className="font-bold text-gray-900 text-sm">{previewImage.title}</h4>
+              <button onClick={() => setPreviewImage(null)} className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500 transition">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4 flex items-center justify-center overflow-auto max-h-[80vh] bg-gray-900">
+              <img src={previewImage.url} alt={previewImage.title} className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-xl" />
+            </div>
+          </div>
         </div>
       )}
 
