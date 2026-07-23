@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Zap, Loader2, BatteryCharging } from 'lucide-react';
-import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const ConnectorManagementView = () => {
-  const [connectors, setConnectors] = setConnectorsState => {
-    // Basic setup
-  };
+
   const [connectorsData, setConnectorsData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,8 +24,11 @@ const ConnectorManagementView = () => {
   const fetchConnectors = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_BASE_URL}/connectors`);
-      setConnectorsData(res.data.data);
+      const res = await fetch(`${API_BASE_URL}/connectors`);
+      const data = await res.json();
+      if (data.success) {
+        setConnectorsData(data.data);
+      }
     } catch (error) {
       console.error('Error fetching connectors', error);
     } finally {
@@ -40,19 +40,36 @@ const ConnectorManagementView = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('adminToken');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
+      const headers = { 
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
       
+      let res;
       if (editingConnector) {
-        await axios.put(`${API_BASE_URL}/connectors/${editingConnector._id}`, formData, config);
+        res = await fetch(`${API_BASE_URL}/connectors/${editingConnector._id}`, {
+          method: 'PUT',
+          headers,
+          body: JSON.stringify(formData)
+        });
       } else {
-        await axios.post(`${API_BASE_URL}/connectors`, formData, config);
+        res = await fetch(`${API_BASE_URL}/connectors`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(formData)
+        });
+      }
+      
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to save');
       }
       
       setIsModalOpen(false);
       fetchConnectors();
     } catch (error) {
       console.error('Error saving connector', error);
-      alert('Error saving connector: ' + (error.response?.data?.message || error.message));
+      alert('Error saving connector: ' + error.message);
     }
   };
 
@@ -60,9 +77,14 @@ const ConnectorManagementView = () => {
     if (!window.confirm('Are you sure you want to delete this connector type?')) return;
     try {
       const token = localStorage.getItem('adminToken');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      await axios.delete(`${API_BASE_URL}/connectors/${id}`, config);
-      fetchConnectors();
+      const res = await fetch(`${API_BASE_URL}/connectors/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        fetchConnectors();
+      }
     } catch (error) {
       console.error('Error deleting connector', error);
       alert('Error deleting connector');
