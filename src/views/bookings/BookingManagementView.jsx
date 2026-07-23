@@ -6,6 +6,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const STATUS_COLORS = {
   Confirmed: { bg: 'bg-blue-50', text: 'text-blue-600', dot: 'bg-blue-500' },
+  Ongoing: { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-500 animate-pulse' },
   Completed: { bg: 'bg-emerald-50', text: 'text-emerald-600', dot: 'bg-emerald-500' },
   Cancelled: { bg: 'bg-red-50', text: 'text-red-500', dot: 'bg-red-500' },
   'No Show': { bg: 'bg-gray-100', text: 'text-gray-500', dot: 'bg-gray-400' },
@@ -90,6 +91,46 @@ const BookingManagementView = () => {
       toast.success(`Booking marked as ${status}`);
       fetchBookings();
       if (selectedBooking?._id === id) setSelectedBooking(updated.data ?? { ...selectedBooking, status });
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleStartChargingRemote = async (id) => {
+    setActionLoading(id);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API_BASE_URL}/booking/${id}/start-charging`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to start charging');
+      toast.success('Charging session started remotely! ⚡');
+      fetchBookings();
+      if (selectedBooking?._id === id) setSelectedBooking(data.data);
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleStopChargingRemote = async (id) => {
+    setActionLoading(id);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API_BASE_URL}/booking/${id}/stop-charging`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to stop charging');
+      toast.success('Charging session stopped & completed! ✅');
+      fetchBookings();
+      if (selectedBooking?._id === id) setSelectedBooking(data.data);
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -219,27 +260,40 @@ const BookingManagementView = () => {
                           >
                             <Eye size={15} />
                           </button>
+
+                          {(b.status === 'Confirmed' || b.status === 'Pending') && (
+                            <button
+                              onClick={() => handleStartChargingRemote(b._id)}
+                              disabled={actionLoading === b._id}
+                              className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg transition flex items-center gap-1 shadow-sm disabled:opacity-40"
+                              title="Start Charging Remotely"
+                            >
+                              {actionLoading === b._id ? <Loader2 size={13} className="animate-spin" /> : <Zap size={13} />}
+                              <span>Start ⚡</span>
+                            </button>
+                          )}
+
+                          {(b.status === 'Ongoing' || b.status === 'Charging') && (
+                            <button
+                              onClick={() => handleStopChargingRemote(b._id)}
+                              disabled={actionLoading === b._id}
+                              className="px-2.5 py-1.5 bg-red-500 hover:bg-red-600 text-white font-bold text-xs rounded-lg transition flex items-center gap-1 shadow-sm disabled:opacity-40"
+                              title="Stop Charging Remotely"
+                            >
+                              {actionLoading === b._id ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}
+                              <span>Stop ⏹</span>
+                            </button>
+                          )}
+
                           {b.status === 'Confirmed' && (
-                            <>
-                              <button
-                                onClick={() => updateStatus(b._id, 'Completed')}
-                                disabled={actionLoading === b._id}
-                                className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition disabled:opacity-40"
-                                title="Mark Completed"
-                              >
-                                {actionLoading === b._id
-                                  ? <Loader2 size={15} className="animate-spin" />
-                                  : <CheckCircle size={15} />}
-                              </button>
-                              <button
-                                onClick={() => updateStatus(b._id, 'Cancelled')}
-                                disabled={actionLoading === b._id}
-                                className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-40"
-                                title="Cancel Booking"
-                              >
-                                <XCircle size={15} />
-                              </button>
-                            </>
+                            <button
+                              onClick={() => updateStatus(b._id, 'Cancelled')}
+                              disabled={actionLoading === b._id}
+                              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-40"
+                              title="Cancel Booking"
+                            >
+                              <XCircle size={15} />
+                            </button>
                           )}
                         </div>
                       </td>
