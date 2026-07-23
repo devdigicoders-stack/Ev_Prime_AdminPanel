@@ -8,7 +8,8 @@ import {
   BrainCircuit, Leaf, Landmark, Map, Building, FileText, Headphones, 
   Ticket, BarChart3, ClipboardList, ShieldCheck, Settings, Zap, X, LogOut,
   AlertTriangle, Tag, Newspaper, CalendarCheck, Banknote,
-  ShoppingBag, Package, ListOrdered, ChevronDown, ChevronRight, Grid3X3, MessageSquare, Tag as TagIcon
+  ShoppingBag, Package, ListOrdered, ChevronDown, ChevronRight, Grid3X3, MessageSquare, Tag as TagIcon,
+  MessageCircleWarning
 } from 'lucide-react';
 
 const Sidebar = ({ onClose }) => {
@@ -35,6 +36,7 @@ const Sidebar = ({ onClose }) => {
     { name: 'Booking Management', icon: CalendarCheck, path: '/bookings' },
     { name: 'Station Management', icon: Zap, path: '/stations' },
     { name: 'Partner Management', icon: Handshake, path: '/partners' },
+    { name: 'Partner Complaints', icon: MessageCircleWarning, path: '/partner-complaints' },
     { name: 'Payment Monitoring', icon: Wallet, path: '/payments' },
     { name: 'Payout Requests', icon: Banknote, path: '/payouts' },
     { name: 'Refund Management', icon: RotateCcw, path: '/refunds' },

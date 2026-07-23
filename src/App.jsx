@@ -33,6 +33,8 @@ import CategoryManagementView from './views/marketplace/CategoryManagementView';
 import FeedbackManagementView from './views/feedback/FeedbackManagementView';
 import PricingManagementView from './views/pricing/PricingManagementView';
 import PayoutManagementView from './views/payouts/PayoutManagementView';
+import PartnerComplaintsView from './views/partner-complaints/PartnerComplaintsView';
+import PartnerComplaintDetailView from './views/partner-complaints/PartnerComplaintDetailView';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 
@@ -70,6 +72,8 @@ function App() {
           <Route path="users" element={<UserManagementView />} />
           <Route path="stations" element={<StationManagementView />} />
           <Route path="partners" element={<PartnerManagementView />} />
+          <Route path="partner-complaints" element={<PartnerComplaintsView />} />
+          <Route path="partner-complaints/:id" element={<PartnerComplaintDetailView />} />
           <Route path="franchise" element={<FranchiseManagementView />} />
           <Route path="payments" element={<PaymentMonitoringView />} />
           <Route path="refunds" element={<RefundManagementView />} />

@@ -11,6 +11,7 @@ const routeTitles = {
   '/users': 'USER MANAGEMENT',
   '/stations': 'STATION MANAGEMENT',
   '/partners': 'PARTNER MANAGEMENT',
+  '/partner-complaints': 'PARTNER COMPLAINTS',
   '/franchise': 'FRANCHISE MANAGEMENT',
   '/payments': 'PAYMENT MONITORING',
   '/payouts': 'PAYOUT REQUESTS',
