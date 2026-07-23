@@ -80,7 +80,7 @@ export default function PartnerComplaintsView() {
               placeholder="Search by ID, Partner, or Title..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-shadow"
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent outline-none transition-shadow"
             />
           </div>
           
@@ -91,7 +91,7 @@ export default function PartnerComplaintsView() {
                 onClick={() => setFilter(status)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors
                   ${filter === status 
-                    ? 'bg-primary-600 text-white shadow-sm' 
+                    ? 'bg-[#8CC63F] text-white shadow-sm' 
                     : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
                   }`}
               >
@@ -106,7 +106,7 @@ export default function PartnerComplaintsView() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         {loading ? (
           <div className="p-12 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8CC63F] mx-auto"></div>
             <p className="mt-4 text-gray-500">Loading complaints...</p>
           </div>
         ) : filteredComplaints.length === 0 ? (
@@ -128,7 +128,7 @@ export default function PartnerComplaintsView() {
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col min-w-0 flex-1">
                     <div className="flex items-center gap-3">
-                      <p className="text-sm font-semibold text-primary-600 truncate">
+                      <p className="text-sm font-semibold text-[#8CC63F] truncate">
                         {comp.complaintId}
                       </p>
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(comp.status)}`}>

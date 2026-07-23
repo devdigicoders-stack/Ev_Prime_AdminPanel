@@ -118,7 +118,7 @@ export default function PartnerComplaintDetailView() {
               <select
                 value={complaint.status}
                 onChange={(e) => handleUpdateStatus(e.target.value)}
-                className="text-sm border-gray-300 rounded-full focus:ring-primary-500 focus:border-primary-500 py-1 pl-3 pr-8"
+                className="text-sm border-gray-300 rounded-full focus:ring-[#8CC63F] focus:border-[#8CC63F] py-1 pl-3 pr-8"
               >
                 <option value="Open">Open</option>
                 <option value="In Progress">In Progress</option>
@@ -154,15 +154,15 @@ export default function PartnerComplaintDetailView() {
                 <div 
                   className={`max-w-[75%] rounded-2xl px-5 py-3 shadow-sm ${
                     isAdmin 
-                      ? 'bg-primary-600 text-white rounded-tr-none' 
+                      ? 'bg-[#8CC63F] text-white rounded-tr-none' 
                       : 'bg-white text-gray-900 border border-gray-100 rounded-tl-none'
                   }`}
                 >
                   <div className="flex items-baseline gap-2 mb-1">
-                    <span className={`text-xs font-semibold ${isAdmin ? 'text-primary-100' : 'text-gray-500'}`}>
+                    <span className={`text-xs font-semibold ${isAdmin ? 'text-white' : 'text-gray-500'}`}>
                       {msg.senderName}
                     </span>
-                    <span className={`text-[10px] ${isAdmin ? 'text-primary-200' : 'text-gray-400'}`}>
+                    <span className={`text-[10px] ${isAdmin ? 'text-white/80' : 'text-gray-400'}`}>
                       {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
@@ -183,13 +183,13 @@ export default function PartnerComplaintDetailView() {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Type your reply to the partner..."
-            className="flex-1 rounded-xl border-gray-300 focus:ring-primary-500 focus:border-primary-500 shadow-sm px-4 py-3"
+            className="flex-1 rounded-xl border-gray-300 focus:ring-[#8CC63F] focus:border-[#8CC63F] shadow-sm px-4 py-3"
             disabled={sending}
           />
           <button
             type="submit"
             disabled={sending || !message.trim()}
-            className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-medium rounded-xl text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 transition-colors shadow-sm"
+            className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-medium rounded-xl text-white bg-[#8CC63F] hover:bg-[#7AB52E] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8CC63F] disabled:opacity-50 transition-colors shadow-sm"
           >
             {sending ? 'Sending...' : (
               <>
