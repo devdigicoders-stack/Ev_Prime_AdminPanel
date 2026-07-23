@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeftIcon, 
-  PaperAirplaneIcon,
-  CheckCircleIcon
-} from '@heroicons/react/24/outline';
-import api from '../../services/api';
+  ArrowLeft, 
+  Send
+} from 'lucide-react';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 import { useNotification } from '../../contexts/NotificationContext';
 
 export default function PartnerComplaintDetailView() {
@@ -28,9 +27,15 @@ export default function PartnerComplaintDetailView() {
 
   const fetchDetails = async () => {
     try {
-      const response = await api.get('/admin/partner-complaints');
-      if (response.data.success) {
-        const found = response.data.data.find(c => c._id === id);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/admin/partner-complaints`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        const found = data.data.find(c => c._id === id);
         if (found) setComplaint(found);
       }
     } catch (error) {
@@ -42,8 +47,17 @@ export default function PartnerComplaintDetailView() {
 
   const handleUpdateStatus = async (newStatus) => {
     try {
-      const response = await api.put(`/admin/partner-complaints/${id}/status`, { status: newStatus });
-      if (response.data.success) {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/admin/partner-complaints/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      const data = await response.json();
+      if (data.success) {
         showNotification(`Status updated to ${newStatus}`, 'success');
         setComplaint({ ...complaint, status: newStatus });
       }
@@ -58,9 +72,18 @@ export default function PartnerComplaintDetailView() {
 
     setSending(true);
     try {
-      const response = await api.post(`/admin/partner-complaints/${id}/reply`, { text: message });
-      if (response.data.success) {
-        setComplaint(response.data.data);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/admin/partner-complaints/${id}/reply`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ text: message })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setComplaint(data.data);
         setMessage('');
       }
     } catch (error) {
@@ -87,7 +110,7 @@ export default function PartnerComplaintDetailView() {
             onClick={() => navigate('/partner-complaints')}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
-            <ArrowLeftIcon className="h-5 w-5 text-gray-500" />
+            <ArrowLeft className="h-5 w-5 text-gray-500" />
           </button>
           <div>
             <div className="flex items-center gap-3">
@@ -171,7 +194,7 @@ export default function PartnerComplaintDetailView() {
             {sending ? 'Sending...' : (
               <>
                 <span>Send</span>
-                <PaperAirplaneIcon className="ml-2 h-4 w-4 transform -rotate-45" />
+                <Send className="ml-2 h-4 w-4" />
               </>
             )}
           </button>

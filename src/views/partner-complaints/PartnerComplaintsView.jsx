@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  BuildingOfficeIcon, 
-  ExclamationCircleIcon,
-  MagnifyingGlassIcon,
-  FunnelIcon,
-  ChevronRightIcon
-} from '@heroicons/react/24/outline';
-import api from '../../services/api';
+  Building, 
+  AlertCircle,
+  Search,
+  Filter,
+  ChevronRight
+} from 'lucide-react';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 import { useNotification } from '../../contexts/NotificationContext';
 
 export default function PartnerComplaintsView() {
@@ -24,9 +24,15 @@ export default function PartnerComplaintsView() {
 
   const fetchComplaints = async () => {
     try {
-      const response = await api.get('/admin/partner-complaints');
-      if (response.data.success) {
-        setComplaints(response.data.data);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/admin/partner-complaints`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setComplaints(data.data);
       }
     } catch (error) {
       showNotification('Failed to fetch partner complaints', 'error');
@@ -68,7 +74,7 @@ export default function PartnerComplaintsView() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
             <input
               type="text"
               placeholder="Search by ID, Partner, or Title..."
@@ -105,7 +111,7 @@ export default function PartnerComplaintsView() {
           </div>
         ) : filteredComplaints.length === 0 ? (
           <div className="p-12 text-center">
-            <ExclamationCircleIcon className="h-12 w-12 text-gray-300 mx-auto" />
+            <AlertCircle className="h-12 w-12 text-gray-300 mx-auto" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No complaints found</h3>
             <p className="mt-1 text-sm text-gray-500">
               {searchTerm || filter !== 'All' ? 'Try adjusting your filters' : 'Great job! No partner complaints.'}
@@ -135,17 +141,17 @@ export default function PartnerComplaintsView() {
                         {comp.title}
                       </p>
                       <div className="flex items-center text-sm text-gray-500">
-                        <BuildingOfficeIcon className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                        <Building className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
                         {comp.partner?.name || 'Unknown Partner'}
                       </div>
                       <div className="flex items-center text-sm text-gray-500">
-                        <FunnelIcon className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                        <Filter className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
                         {comp.category}
                       </div>
                     </div>
                   </div>
                   <div className="ml-4 flex-shrink-0">
-                    <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+                    <ChevronRight className="h-5 w-5 text-gray-400" />
                   </div>
                 </div>
               </li>
