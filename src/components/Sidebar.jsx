@@ -58,8 +58,9 @@ const Sidebar = ({ onClose }) => {
     { name: 'EV Heat Map', icon: Map, path: '/heatmap' },
     { name: 'City Analytics', icon: Building, path: '/cities' },
     { name: 'CMS', icon: FileText, path: '/cms' },
-    { name: 'Reports', icon: BarChart3, path: '/reports' },
-    { name: 'Audit Logs', icon: ClipboardList, path: '/audit' },
+    { name: 'Connector Types', icon: Zap, path: '/connectors' },
+    { name: 'Reports Generation', icon: BarChart3, path: '/reports' },
+    { name: 'Audit Log', icon: ClipboardList, path: '/audit' },
     { name: 'Security Center', icon: ShieldCheck, path: '/security' },
     { name: 'Settings', icon: Settings, path: '/settings' },
   ];

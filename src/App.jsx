@@ -33,6 +33,7 @@ import CategoryManagementView from './views/marketplace/CategoryManagementView';
 import FeedbackManagementView from './views/feedback/FeedbackManagementView';
 import PricingManagementView from './views/pricing/PricingManagementView';
 import PayoutManagementView from './views/payouts/PayoutManagementView';
+import ConnectorManagementView from './views/connectors/ConnectorManagementView';
 import PartnerComplaintsView from './views/partner-complaints/PartnerComplaintsView';
 import PartnerComplaintDetailView from './views/partner-complaints/PartnerComplaintDetailView';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -103,6 +104,7 @@ function App() {
           <Route path="feedback" element={<FeedbackManagementView />} />
           <Route path="pricing" element={<PricingManagementView />} />
           <Route path="payouts" element={<PayoutManagementView />} />
+          <Route path="connectors" element={<ConnectorManagementView />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
