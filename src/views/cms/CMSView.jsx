@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, Trash2, Link2, ChevronLeft, ChevronRight, ChevronDown, ImageIcon, X, UploadCloud, Loader2, AlertTriangle, FileText, Shield, ScrollText, Save } from 'lucide-react';
+import { Plus, Edit2, Trash2, Link2, ChevronDown, ImageIcon, X, UploadCloud, Loader2, AlertTriangle, FileText, Shield, ScrollText, Save, HelpCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -363,6 +363,356 @@ const LegalTab = () => {
   );
 };
 
+// ─── FAQ Management Tab ───────────────────────────────────────────────────────
+const FAQTab = () => {
+  const CATEGORIES = ['General', 'Charging', 'Payments', 'Account', 'Other'];
+
+  const [faqs, setFaqs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filterCategory, setFilterCategory] = useState('All');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [faqToDelete, setFaqToDelete] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
+  // form state
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [category, setCategory] = useState('General');
+  const [order, setOrder] = useState(0);
+  const [isActive, setIsActive] = useState(true);
+
+  const fetchFAQs = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const params = filterCategory !== 'All' ? `?category=${filterCategory}` : '';
+      const res = await fetch(`${API_BASE_URL}/faq/admin${params}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) setFaqs(data.data);
+    } catch (err) {
+      toast.error('Failed to load FAQs');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchFAQs(); }, [filterCategory]);
+
+  const openAddModal = () => {
+    setIsEditMode(false); setEditingId(null);
+    setQuestion(''); setAnswer(''); setCategory('General'); setOrder(0); setIsActive(true);
+    setModalOpen(true);
+  };
+
+  const openEditModal = (faq) => {
+    setIsEditMode(true); setEditingId(faq._id);
+    setQuestion(faq.question); setAnswer(faq.answer);
+    setCategory(faq.category); setOrder(faq.order); setIsActive(faq.isActive);
+    setModalOpen(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!question.trim() || !answer.trim()) {
+      toast.error('Question and answer are required');
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const method = isEditMode ? 'PUT' : 'POST';
+      const url = isEditMode ? `${API_BASE_URL}/faq/${editingId}` : `${API_BASE_URL}/faq`;
+      const res = await fetch(url, {
+        method,
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, answer, category, order: Number(order), isActive }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed');
+      toast.success(isEditMode ? 'FAQ updated!' : 'FAQ created!');
+      setModalOpen(false);
+      fetchFAQs();
+    } catch (err) {
+      toast.error(err.message || 'Error saving FAQ');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const confirmDelete = (id) => { setFaqToDelete(id); setDeleteModalOpen(true); };
+
+  const handleDelete = async () => {
+    if (!faqToDelete) return;
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API_BASE_URL}/faq/${faqToDelete}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to delete');
+      toast.success('FAQ deleted');
+      setDeleteModalOpen(false); setFaqToDelete(null);
+      fetchFAQs();
+    } catch (err) {
+      toast.error('Error deleting FAQ');
+    }
+  };
+
+  const toggleActive = async (faq) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API_BASE_URL}/faq/${faq._id}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !faq.isActive }),
+      });
+      if (!res.ok) throw new Error('Failed');
+      fetchFAQs();
+    } catch {
+      toast.error('Failed to update status');
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">FAQ Management</h2>
+          <p className="text-gray-500 text-sm">Manage FAQs shown in the user app</p>
+        </div>
+        <button
+          onClick={openAddModal}
+          className="bg-[#8CC63F] hover:bg-[#116631] text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors"
+        >
+          <Plus size={16} /> Add FAQ
+        </button>
+      </div>
+
+      {/* Category filter */}
+      <div className="flex gap-2 flex-wrap">
+        {['All', ...CATEGORIES].map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setFilterCategory(cat)}
+            className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-all ${
+              filterCategory === cat
+                ? 'bg-[#8CC63F] text-white border-[#8CC63F]'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-[#8CC63F] hover:text-[#8CC63F]'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="animate-spin text-[#8CC63F]" size={36} />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[700px]">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50">
+                  <th className="px-5 py-4 text-xs font-bold text-gray-500 uppercase">Question</th>
+                  <th className="px-5 py-4 text-xs font-bold text-gray-500 uppercase">Category</th>
+                  <th className="px-5 py-4 text-xs font-bold text-gray-500 uppercase text-center">Order</th>
+                  <th className="px-5 py-4 text-xs font-bold text-gray-500 uppercase text-center">Status</th>
+                  <th className="px-5 py-4 text-xs font-bold text-gray-500 uppercase text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {faqs.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-10 text-center text-sm text-gray-400">
+                      No FAQs found. Add one to get started.
+                    </td>
+                  </tr>
+                ) : faqs.map((faq) => (
+                  <tr key={faq._id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-5 py-4 max-w-xs">
+                      <p className="text-sm font-semibold text-gray-800 truncate">{faq.question}</p>
+                      <p className="text-xs text-gray-400 truncate mt-0.5">{faq.answer}</p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700">
+                        {faq.category}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-center">
+                      <span className="text-sm font-bold text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                        {faq.order}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-center">
+                      <button
+                        onClick={() => toggleActive(faq)}
+                        className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${
+                          faq.isActive
+                            ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                            : 'bg-red-50 text-red-500 hover:bg-red-100'
+                        }`}
+                      >
+                        {faq.isActive ? 'Active' : 'Inactive'}
+                      </button>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center justify-center gap-3">
+                        <button
+                          onClick={() => openEditModal(faq)}
+                          className="text-gray-400 hover:text-emerald-600 transition-colors"
+                        >
+                          <Edit2 size={15} />
+                        </button>
+                        <button
+                          onClick={() => confirmDelete(faq._id)}
+                          className="text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Add/Edit Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+            <form onSubmit={handleSubmit}>
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-900">
+                  {isEditMode ? 'Edit FAQ' : 'Add FAQ'}
+                </h2>
+                <button type="button" onClick={() => setModalOpen(false)} className="text-gray-400 hover:bg-gray-100 p-1.5 rounded-lg">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 mb-1 block">Question *</label>
+                  <input
+                    type="text"
+                    required
+                    value={question}
+                    onChange={e => setQuestion(e.target.value)}
+                    placeholder="Enter FAQ question"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 mb-1 block">Answer *</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={answer}
+                    onChange={e => setAnswer(e.target.value)}
+                    placeholder="Enter FAQ answer"
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] resize-y"
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-xs font-semibold text-gray-500 mb-1 block">Category</label>
+                    <div className="relative">
+                      <select
+                        value={category}
+                        onChange={e => setCategory(e.target.value)}
+                        className="w-full pl-3 pr-8 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] appearance-none"
+                      >
+                        {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                      </select>
+                      <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 mb-1 block">Order</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={order}
+                      onChange={e => setOrder(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F]"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-semibold text-gray-600">Active in app</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsActive(v => !v)}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${isActive ? 'bg-[#8CC63F]' : 'bg-gray-300'}`}
+                  >
+                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+              </div>
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="px-4 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-sm font-semibold text-white bg-[#8CC63F] hover:bg-[#116631] disabled:opacity-50 rounded-lg flex items-center gap-2"
+                >
+                  {isSubmitting ? <><Loader2 size={14} className="animate-spin" /> Saving...</> : (isEditMode ? 'Save Changes' : 'Add FAQ')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+            <div className="p-6 text-center">
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
+                <AlertTriangle size={28} className="text-red-500" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Delete FAQ?</h3>
+              <p className="text-sm text-gray-500">This FAQ will be removed from the app.</p>
+            </div>
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
+              <button
+                onClick={() => { setDeleteModalOpen(false); setFaqToDelete(null); }}
+                className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-red-500 rounded-lg hover:bg-red-600"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Main CMSView with Tabs ───────────────────────────────────────────────────
 const CMSView = () => {
   const [activeTab, setActiveTab] = useState('banners');
@@ -370,6 +720,7 @@ const CMSView = () => {
   const tabs = [
     { id: 'banners', label: 'Banner Management', icon: ImageIcon },
     { id: 'legal', label: 'Legal Documents', icon: FileText },
+    { id: 'faq', label: 'FAQ Management', icon: HelpCircle },
   ];
 
   return (
@@ -377,7 +728,7 @@ const CMSView = () => {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Content Management</h1>
-        <p className="text-gray-500 text-sm font-medium">Manage banners, privacy policy and terms of service</p>
+        <p className="text-gray-500 text-sm font-medium">Manage banners, privacy policy, terms of service and FAQs</p>
       </div>
 
       {/* Tab Switcher */}
@@ -401,6 +752,7 @@ const CMSView = () => {
       {/* Tab Content */}
       {activeTab === 'banners' && <BannerTab />}
       {activeTab === 'legal' && <LegalTab />}
+      {activeTab === 'faq' && <FAQTab />}
     </div>
   );
 };
