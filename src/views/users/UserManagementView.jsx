@@ -3,7 +3,7 @@ import {
   Search, ChevronDown, Trash2, ChevronLeft, ChevronRight, Loader2, 
   AlertCircle, X, Eye, Lock, Unlock, ShieldAlert, CheckCircle2, XCircle, 
   Wallet, RotateCcw, Zap, User, Car, FileText, Leaf, Award, 
-  ArrowUpRight, ArrowDownLeft, Calendar, Clock, DollarSign, AlertTriangle, ExternalLink, Square, Play
+  ArrowUpRight, ArrowDownLeft, Calendar, Clock, DollarSign, AlertTriangle, ExternalLink, Square, Play, Gift, Star, TrendingUp, Plus
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -67,6 +67,13 @@ const UserManagementView = () => {
   const [refundAmount, setRefundAmount] = useState('');
   const [refundReason, setRefundReason] = useState('');
   const [refundSubmitLoading, setRefundSubmitLoading] = useState(false);
+
+  // Rewards state
+  const [rewardsData, setRewardsData] = useState(null);
+  const [rewardsLoading, setRewardsLoading] = useState(false);
+  const [addPointsAmount, setAddPointsAmount] = useState('');
+  const [addPointsReason, setAddPointsReason] = useState('');
+  const [addPointsLoading, setAddPointsLoading] = useState(false);
 
   // Fetch Users
   const fetchUsers = async () => {
@@ -258,6 +265,49 @@ const UserManagementView = () => {
     }
   };
 
+  // Fetch Rewards Data for User — uses already-loaded selectedUser data (no separate endpoint needed)
+  const fetchRewardsData = (userId) => {
+    setRewardsLoading(true);
+    // selectedUser already has rewardPoints and tier from the profile fetch
+    // We just sync rewardsData state with the latest selectedUser values
+    setRewardsData(prev => ({
+      ...prev,
+      rewardPoints: selectedUser?.rewardPoints ?? 0,
+      tier: selectedUser?.tier ?? 'Bronze',
+    }));
+    setRewardsLoading(false);
+  };
+
+  const handleAddPoints = async (e) => {
+    e.preventDefault();
+    if (!addPointsAmount || parseInt(addPointsAmount) <= 0) {
+      toast.error('Enter valid points amount');
+      return;
+    }
+    setAddPointsLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API_BASE_URL}/rewards/add-points`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: selectedUser._id, points: parseInt(addPointsAmount), reason: addPointsReason })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed');
+      toast.success(`${addPointsAmount} points added successfully!`);
+      setAddPointsAmount('');
+      setAddPointsReason('');
+      const updatedUser = { ...selectedUser, rewardPoints: data.data.rewardPoints, tier: data.data.tier };
+      setUsers(prev => prev.map(u => u._id === selectedUser._id ? { ...u, rewardPoints: data.data.rewardPoints, tier: data.data.tier } : u));
+      setSelectedUser(updatedUser);
+      setRewardsData({ rewardPoints: data.data.rewardPoints, tier: data.data.tier });
+    } catch (err) {
+      toast.error(err.message || 'Failed to add points');
+    } finally {
+      setAddPointsLoading(false);
+    }
+  };
+
   // Remote Charging Control (Start / Stop)
   const handleStartChargingRemote = async (bookingId) => {
     try {
@@ -296,6 +346,8 @@ const UserManagementView = () => {
     if (!selectedUser || !isDrawerOpen) return;
     if (activeTab === 'history') {
       fetchChargingHistory(selectedUser._id);
+    } else if (activeTab === 'rewards') {
+      fetchRewardsData(selectedUser._id);
     } else if (activeTab === 'kyc') {
       fetchKYCData(selectedUser._id);
     } else if (activeTab === 'wallet') {
@@ -742,6 +794,7 @@ const UserManagementView = () => {
                 {[
                   { id: 'overview', label: 'Overview', icon: User },
                   { id: 'history', label: 'Charging History', icon: Zap },
+                  { id: 'rewards', label: 'Rewards & Points', icon: Gift },
                   { id: 'kyc', label: 'KYC Document', icon: FileText },
                   { id: 'wallet', label: 'Wallet & Refunds', icon: Wallet },
                 ].map((tab) => {
@@ -948,7 +1001,124 @@ const UserManagementView = () => {
                       </div>
                     )}
 
-                    {/* TAB 3: KYC DOCUMENT VERIFICATION */}
+                    {/* TAB 3: REWARDS & POINTS */}
+                    {activeTab === 'rewards' && (
+                      <div className="space-y-5">
+                        {rewardsLoading ? (
+                          <div className="py-12 text-center text-gray-400">
+                            <Loader2 className="animate-spin mx-auto text-[#8CC63F] mb-2" size={24} />
+                            <p className="text-xs font-medium">Loading rewards data...</p>
+                          </div>
+                        ) : (
+                          <>
+                            {/* Points Hero */}
+                            <div className="bg-gradient-to-br from-amber-500 to-orange-500 text-white rounded-2xl p-6 shadow-xl flex items-center justify-between">
+                              <div>
+                                <div className="text-xs font-bold uppercase tracking-wider text-amber-100 mb-1 flex items-center gap-1.5">
+                                  <Award size={14} /> Reward Points
+                                </div>
+                                <div className="text-4xl font-extrabold tracking-tight">
+                                  {rewardsData?.rewardPoints ?? selectedUser.rewardPoints ?? 0}
+                                </div>
+                                <div className="text-xs text-amber-100 mt-1">pts</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-xs text-amber-100 font-bold uppercase mb-1">Tier</div>
+                                <div className="text-2xl font-extrabold">{rewardsData?.tier ?? selectedUser.tier ?? 'Bronze'}</div>
+                                <div className="mt-2 text-xs bg-white/20 px-3 py-1 rounded-full font-bold">
+                                  {Math.floor((rewardsData?.rewardPoints ?? selectedUser.rewardPoints ?? 0) / 500)} discount(s) available
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Tier Progress */}
+                            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm space-y-3">
+                              <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+                                <TrendingUp size={15} className="text-amber-500" /> Tier Progress
+                              </h4>
+                              {[{ label: 'Bronze → Silver', min: 0, max: 500 }, { label: 'Silver → Gold', min: 500, max: 2000 }, { label: 'Gold → Platinum', min: 2000, max: 5000 }].map((tier) => {
+                                const pts = rewardsData?.rewardPoints ?? selectedUser.rewardPoints ?? 0;
+                                const progress = Math.min(1, Math.max(0, (pts - tier.min) / (tier.max - tier.min)));
+                                const done = pts >= tier.max;
+                                return (
+                                  <div key={tier.label}>
+                                    <div className="flex justify-between text-[11px] font-medium text-gray-500 mb-1">
+                                      <span>{tier.label}</span>
+                                      <span className={done ? 'text-emerald-600 font-bold' : ''}>{done ? '✓ Achieved' : `${Math.min(pts, tier.max)} / ${tier.max}`}</span>
+                                    </div>
+                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                      <div className={`h-full rounded-full transition-all ${done ? 'bg-emerald-500' : 'bg-amber-400'}`} style={{ width: `${progress * 100}%` }} />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Add Points Form */}
+                            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                              <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-2 mb-4">
+                                <Plus size={15} className="text-[#8CC63F]" /> Manually Add Points
+                              </h4>
+                              <form onSubmit={handleAddPoints} className="space-y-3">
+                                <div className="grid grid-cols-2 gap-3">
+                                  <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Points to Add</label>
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      required
+                                      placeholder="e.g. 50"
+                                      value={addPointsAmount}
+                                      onChange={(e) => setAddPointsAmount(e.target.value)}
+                                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-[#8CC63F] focus:outline-none"
+                                    />
+                                  </div>
+                                  <div>
+                                    <label className="block text-xs font-bold text-gray-600 mb-1">Reason (optional)</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. Bonus reward"
+                                      value={addPointsReason}
+                                      onChange={(e) => setAddPointsReason(e.target.value)}
+                                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#8CC63F] focus:outline-none"
+                                    />
+                                  </div>
+                                </div>
+                                <button
+                                  type="submit"
+                                  disabled={addPointsLoading}
+                                  className="w-full py-2.5 bg-[#8CC63F] hover:bg-[#7ab52e] text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-sm"
+                                >
+                                  {addPointsLoading ? <Loader2 className="animate-spin" size={14} /> : <><Plus size={14} /> Add Points</>}
+                                </button>
+                              </form>
+                            </div>
+
+                            {/* How Points Are Earned */}
+                            <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                              <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                <Star size={14} className="text-amber-500" /> How Points Are Earned
+                              </h4>
+                              <div className="space-y-2 text-xs">
+                                {[
+                                  { action: 'Submit a Review', pts: '+50 pts', color: 'text-amber-600 bg-amber-50' },
+                                  { action: 'Refer a Friend (first charge)', pts: '+500 pts', color: 'text-purple-600 bg-purple-50' },
+                                  { action: 'Every ₹100 spent on charging', pts: '+10 pts', color: 'text-emerald-600 bg-emerald-50' },
+                                  { action: 'Redeem 500 pts → ₹50 discount', pts: '-500 pts', color: 'text-red-600 bg-red-50' },
+                                ].map((item) => (
+                                  <div key={item.action} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
+                                    <span className="text-gray-700 font-medium">{item.action}</span>
+                                    <span className={`px-2 py-0.5 rounded-lg font-bold text-[11px] ${item.color}`}>{item.pts}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {/* TAB 4: KYC DOCUMENT VERIFICATION */}
                     {activeTab === 'kyc' && (
                       <div className="space-y-5">
                         {kycLoading ? (
