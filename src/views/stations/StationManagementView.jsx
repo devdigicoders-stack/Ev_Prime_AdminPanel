@@ -838,6 +838,42 @@ const StationManagementView = () => {
                     className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] shadow-sm" />
                 </div>
 
+                {/* Amenities */}
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">Amenities</label>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {['Cafe', 'Parking', 'Washroom', 'Wi-Fi', 'Lounge', 'Restaurant', 'ATM', 'Store', 'EV Accessories', 'CCTV', 'Security Guard', 'Air Pump'].map((amenity) => {
+                      const isChecked = formData.amenities.includes(amenity);
+                      return (
+                        <label
+                          key={amenity}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer transition-all text-sm select-none ${
+                            isChecked
+                              ? 'border-[#8CC63F] bg-[#8CC63F]/10 text-[#5a8a1a] font-semibold'
+                              : 'border-gray-200 bg-white text-gray-600 hover:border-[#8CC63F]/50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="accent-[#8CC63F] w-4 h-4 shrink-0"
+                            checked={isChecked}
+                            onChange={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                amenities: isChecked
+                                  ? prev.amenities.filter(a => a !== amenity)
+                                  : [...prev.amenities, amenity]
+                              }));
+                            }}
+                          />
+                          {amenity}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Station Image</label>
                   <input 
