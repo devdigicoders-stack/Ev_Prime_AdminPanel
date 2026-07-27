@@ -406,7 +406,7 @@ const FAQTab = () => {
   const openAddModal = () => {
     setIsEditMode(false); setEditingId(null);
     setQuestion(''); setAnswer(''); setCategory('General'); setOrder(0); setIsActive(true);
-    setModalOpen(true);
+     setModalOpen(true);
   };
 
   const openEditModal = (faq) => {
