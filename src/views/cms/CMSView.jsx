@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, Trash2, Link2, ChevronDown, ImageIcon, X, UploadCloud, Loader2, AlertTriangle, FileText, Shield, ScrollText, Save, HelpCircle, Zap } from 'lucide-react';
+import { Plus, Edit2, Trash2, Link2, ChevronDown, ImageIcon, X, UploadCloud, Loader2, AlertTriangle, FileText, Shield, ScrollText, Save, HelpCircle, Zap, Bold, Italic, Underline, Heading1, Heading2, List, ListOrdered, Code, Link } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -232,6 +232,28 @@ const LegalTab = () => {
   const currentDoc = activeDoc === 'privacy_policy' ? privacyDoc : termsDoc;
   const setCurrentDoc = activeDoc === 'privacy_policy' ? setPrivacyDoc : setTermsDoc;
 
+  const editorRef = useRef(null);
+
+  const runCommand = (command, value = null) => {
+    document.execCommand(command, false, value);
+    if (editorRef.current) {
+      setCurrentDoc(prev => ({ ...prev, content: editorRef.current.innerHTML }));
+    }
+  };
+
+  const handleLinkPrompt = () => {
+    const url = prompt('Enter the link URL (e.g. https://google.com):');
+    if (url) {
+      runCommand('createLink', url);
+    }
+  };
+
+  const handleEditorInput = () => {
+    if (editorRef.current) {
+      setCurrentDoc(prev => ({ ...prev, content: editorRef.current.innerHTML }));
+    }
+  };
+
   const fetchDoc = async (type) => {
     try {
       const token = localStorage.getItem('adminToken');
@@ -344,18 +366,39 @@ const LegalTab = () => {
           </span>
         </div>
 
-        {/* Textarea */}
+        {/* Rich Text Editor */}
         <div className="p-6">
           <p className="text-xs text-gray-400 mb-3 font-medium">
-            Write plain text. Each paragraph will be displayed in the app. Use numbered sections (e.g. "1. Introduction") for structure.
+            Format your text. The content will be displayed directly on the app and website.
           </p>
-          <textarea
-            value={currentDoc.content || ''}
-            onChange={e => setCurrentDoc(prev => ({ ...prev, content: e.target.value }))}
-            rows={24}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8CC63F] font-mono leading-relaxed resize-y"
-            placeholder="Enter document content here..."
-          />
+          
+          <div className="border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#8CC63F]">
+            {/* Editor Toolbar */}
+            <div className="bg-gray-50 border-b border-gray-200 p-2 flex flex-wrap gap-1">
+              <button type="button" onClick={() => runCommand('bold')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Bold"><Bold className="w-4 h-4" /></button>
+              <button type="button" onClick={() => runCommand('italic')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Italic"><Italic className="w-4 h-4" /></button>
+              <button type="button" onClick={() => runCommand('underline')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Underline"><Underline className="w-4 h-4" /></button>
+              <div className="w-px h-6 bg-gray-200 mx-1"></div>
+              <button type="button" onClick={() => runCommand('formatBlock', '<h1>')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700 font-bold" title="H1"><Heading1 className="w-4 h-4" /></button>
+              <button type="button" onClick={() => runCommand('formatBlock', '<h2>')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700 font-bold" title="H2"><Heading2 className="w-4 h-4" /></button>
+              <button type="button" onClick={() => runCommand('formatBlock', '<p>')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Paragraph"><Code className="w-4 h-4" /></button>
+              <div className="w-px h-6 bg-gray-200 mx-1"></div>
+              <button type="button" onClick={() => runCommand('insertUnorderedList')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Bullet List"><List className="w-4 h-4" /></button>
+              <button type="button" onClick={() => runCommand('insertOrderedList')} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Numbered List"><ListOrdered className="w-4 h-4" /></button>
+              <button type="button" onClick={handleLinkPrompt} className="p-1.5 hover:bg-gray-200 rounded text-gray-700" title="Add Link"><Link className="w-4 h-4" /></button>
+            </div>
+
+            {/* Editor Content Area */}
+            <div
+              key={activeDoc}
+              ref={editorRef}
+              contentEditable
+              onInput={handleEditorInput}
+              dangerouslySetInnerHTML={{ __html: currentDoc.content || '' }}
+              className="min-h-[400px] max-h-[600px] overflow-y-auto p-4 focus:outline-none bg-white text-gray-800 prose prose-sm max-w-none text-sm"
+              placeholder="Enter document content here..."
+            />
+          </div>
           <p className="text-xs text-gray-400 mt-2">{currentDoc.content?.length || 0} characters</p>
         </div>
       </div>
