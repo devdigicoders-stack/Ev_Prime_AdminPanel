@@ -40,6 +40,8 @@ import EnquiriesView from './views/enquiries/EnquiriesView';
 import FAQManagementView from './views/faq/FAQManagementView';
 import CustomerReviewsView from './views/reviews/CustomerReviewsView';
 import BlogManagementView from './views/blog/BlogManagementView';
+import NewsletterView from './views/newsletter/NewsletterView';
+import TeamManagementView from './views/team/TeamManagementView';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 
@@ -92,6 +94,8 @@ function App() {
           <Route path="faq" element={<FAQManagementView />} />
           <Route path="reviews" element={<CustomerReviewsView />} />
           <Route path="blog" element={<BlogManagementView />} />
+          <Route path="newsletter" element={<NewsletterView />} />
+          <Route path="our-team" element={<TeamManagementView />} />
           <Route path="tickets" element={<TicketManagementView />} />
           <Route path="offers" element={<OfferManagementView />} />
           <Route path="news" element={<NewsManagementView />} />

@@ -9,7 +9,7 @@ import {
   Ticket, BarChart3, ClipboardList, ShieldCheck, Settings, Zap, X, LogOut,
   AlertTriangle, Tag, Newspaper, CalendarCheck, Banknote,
   ShoppingBag, Package, ListOrdered, ChevronDown, ChevronRight, Grid3X3, MessageSquare, Tag as TagIcon,
-  MessageCircleWarning, HelpCircle, Star, BookOpen
+  MessageCircleWarning, HelpCircle, Star, BookOpen, Mail
 } from 'lucide-react';
 
 const Sidebar = ({ onClose, isExpanded = true }) => {
@@ -48,6 +48,8 @@ const Sidebar = ({ onClose, isExpanded = true }) => {
     { name: 'Ticket Management', icon: Ticket, path: '/tickets' },
     { name: 'Support Center', icon: Headphones, path: '/support' },
     { name: 'Enquiries', icon: MessageSquare, path: '/enquiries' },
+    { name: 'Newsletter', icon: Mail, path: '/newsletter' },
+    { name: 'Our Team', icon: Users, path: '/our-team' },
     { name: 'Customer Reviews', icon: Star, path: '/reviews' },
     { name: 'Blog Management', icon: BookOpen, path: '/blog' },
     { name: 'FAQ Management', icon: HelpCircle, path: '/faq' },
