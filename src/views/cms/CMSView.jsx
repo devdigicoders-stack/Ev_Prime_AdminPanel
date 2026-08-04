@@ -254,6 +254,14 @@ const LegalTab = () => {
     }
   };
 
+  // Set editor content only when switching documents (not on every keystroke)
+  useEffect(() => {
+    if (editorRef.current) {
+      const currentContent = activeDoc === 'privacy_policy' ? privacyDoc.content : termsDoc.content;
+      editorRef.current.innerHTML = currentContent || '';
+    }
+  }, [activeDoc, loading]);
+
   const fetchDoc = async (type) => {
     try {
       const token = localStorage.getItem('adminToken');
@@ -393,10 +401,11 @@ const LegalTab = () => {
               key={activeDoc}
               ref={editorRef}
               contentEditable
+              suppressContentEditableWarning
               onInput={handleEditorInput}
-              dangerouslySetInnerHTML={{ __html: currentDoc.content || '' }}
+              dir="ltr"
               className="min-h-[400px] max-h-[600px] overflow-y-auto p-4 focus:outline-none bg-white text-gray-800 prose prose-sm max-w-none text-sm"
-              placeholder="Enter document content here..."
+              style={{ direction: 'ltr', unicodeBidi: 'embed', textAlign: 'left' }}
             />
           </div>
           <p className="text-xs text-gray-400 mt-2">{currentDoc.content?.length || 0} characters</p>
