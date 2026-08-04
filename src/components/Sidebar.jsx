@@ -9,7 +9,7 @@ import {
   Ticket, BarChart3, ClipboardList, ShieldCheck, Settings, Zap, X, LogOut,
   AlertTriangle, Tag, Newspaper, CalendarCheck, Banknote,
   ShoppingBag, Package, ListOrdered, ChevronDown, ChevronRight, Grid3X3, MessageSquare, Tag as TagIcon,
-  MessageCircleWarning, HelpCircle, Star
+  MessageCircleWarning, HelpCircle, Star, BookOpen
 } from 'lucide-react';
 
 const Sidebar = ({ onClose, isExpanded = true }) => {
@@ -49,6 +49,7 @@ const Sidebar = ({ onClose, isExpanded = true }) => {
     { name: 'Support Center', icon: Headphones, path: '/support' },
     { name: 'Enquiries', icon: MessageSquare, path: '/enquiries' },
     { name: 'Customer Reviews', icon: Star, path: '/reviews' },
+    { name: 'Blog Management', icon: BookOpen, path: '/blog' },
     { name: 'FAQ Management', icon: HelpCircle, path: '/faq' },
   ];
 

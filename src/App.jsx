@@ -39,6 +39,7 @@ import PartnerComplaintDetailView from './views/partner-complaints/PartnerCompla
 import EnquiriesView from './views/enquiries/EnquiriesView';
 import FAQManagementView from './views/faq/FAQManagementView';
 import CustomerReviewsView from './views/reviews/CustomerReviewsView';
+import BlogManagementView from './views/blog/BlogManagementView';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 
@@ -90,6 +91,7 @@ function App() {
           <Route path="enquiries" element={<EnquiriesView />} />
           <Route path="faq" element={<FAQManagementView />} />
           <Route path="reviews" element={<CustomerReviewsView />} />
+          <Route path="blog" element={<BlogManagementView />} />
           <Route path="tickets" element={<TicketManagementView />} />
           <Route path="offers" element={<OfferManagementView />} />
           <Route path="news" element={<NewsManagementView />} />
