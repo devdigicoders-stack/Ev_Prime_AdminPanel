@@ -38,7 +38,8 @@ const BlogManagementView = () => {
 
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
   const token = localStorage.getItem('adminToken');
-  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const authHeader = { Authorization: `Bearer ${token}` };
+  const jsonHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
   const fetchBlogs = async () => {
     try {
@@ -49,7 +50,7 @@ const BlogManagementView = () => {
       if (searchTerm) params.set('search', searchTerm);
 
       const res = await fetch(`${baseUrl}/blogs/admin/all?${params}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: authHeader
       });
       const data = await res.json();
       if (data.success) setBlogs(data.data);
@@ -100,7 +101,7 @@ const BlogManagementView = () => {
     try {
       const url = editingBlog ? `${baseUrl}/blogs/${editingBlog._id}` : `${baseUrl}/blogs`;
       const method = editingBlog ? 'PUT' : 'POST';
-      const res = await fetch(url, { method, headers, body: JSON.stringify(payload) });
+      const res = await fetch(url, { method, headers: jsonHeaders, body: JSON.stringify(payload) });
       const data = await res.json();
 
       if (data.success) {
@@ -127,7 +128,7 @@ const BlogManagementView = () => {
 
   const handleTogglePublish = async (blog) => {
     try {
-      const res = await fetch(`${baseUrl}/blogs/${blog._id}/publish`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${baseUrl}/blogs/${blog._id}/publish`, { method: 'PUT', headers: authHeader });
       const data = await res.json();
       if (data.success) {
         Swal.fire({
@@ -159,7 +160,7 @@ const BlogManagementView = () => {
     if (!result.isConfirmed) return;
 
     try {
-      const res = await fetch(`${baseUrl}/blogs/${blog._id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${baseUrl}/blogs/${blog._id}`, { method: 'DELETE', headers: authHeader });
       const data = await res.json();
       if (data.success) {
         Swal.fire({ icon: 'success', title: 'Deleted!', timer: 1500, showConfirmButton: false });
