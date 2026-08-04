@@ -102,6 +102,7 @@ function FirebaseSetup() {
 
 const AdminLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
   const currentTitle = routeTitles[location.pathname] || 'ADMIN PANEL';
@@ -117,8 +118,8 @@ const AdminLayout = () => {
         ></div>
       )}
 
-      <div className={`fixed inset-y-0 left-0 z-50 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out h-full`}>
-        <Sidebar onClose={() => setIsMobileMenuOpen(false)} />
+      <div className={`fixed inset-y-0 left-0 z-50 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-all duration-300 ease-in-out h-full`}>
+        <Sidebar onClose={() => setIsMobileMenuOpen(false)} isExpanded={isDesktopMenuOpen} />
       </div>
 
       <div className="flex-1 flex flex-col h-full overflow-hidden relative w-full">
@@ -132,7 +133,10 @@ const AdminLayout = () => {
             >
               <Menu size={24} />
             </button>
-            <button className="hidden lg:block p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors">
+            <button 
+              onClick={() => setIsDesktopMenuOpen(!isDesktopMenuOpen)}
+              className="hidden lg:block p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+            >
               <Menu size={24} />
             </button>
 

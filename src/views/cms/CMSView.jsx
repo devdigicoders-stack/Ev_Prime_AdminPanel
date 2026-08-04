@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, Trash2, Link2, ChevronDown, ImageIcon, X, UploadCloud, Loader2, AlertTriangle, FileText, Shield, ScrollText, Save, HelpCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, Link2, ChevronDown, ImageIcon, X, UploadCloud, Loader2, AlertTriangle, FileText, Shield, ScrollText, Save, HelpCircle, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -713,6 +713,214 @@ const FAQTab = () => {
   );
 };
 
+// ─── Charging Solutions Management Tab ────────────────────────────────────────────────────────
+const ChargingSolutionsTab = () => {
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [solutions, setSolutions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [solutionToDelete, setSolutionToDelete] = useState(null);
+  
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [link, setLink] = useState('');
+  const [isActive, setIsActive] = useState(true);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const fileInputRef = useRef(null);
+
+  const fetchSolutions = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/cms/solutions`);
+      if (!response.ok) throw new Error('Failed to fetch charging solutions');
+      const data = await response.json();
+      setSolutions(data);
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchSolutions(); }, []);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const openAddModal = () => {
+    setIsEditMode(false); setEditingId(null); setTitle(''); setDescription('');
+    setLink('/download-app'); setIsActive(true); setImageFile(null); setImagePreview(null);
+    setIsAddModalOpen(true);
+  };
+
+  const openEditModal = (sol) => {
+    setIsEditMode(true); setEditingId(sol._id); setTitle(sol.title); setDescription(sol.description);
+    setLink(sol.link); setIsActive(sol.isActive);
+    setImageFile(null); setImagePreview(sol.image ? getFullImageUrl(sol.image) : null);
+    setIsAddModalOpen(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!title || !description) { toast.error('Please provide Title and Description.'); return; }
+    if (!isEditMode && !imageFile) { toast.error('Please upload an Image.'); return; }
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const formData = new FormData();
+      formData.append('title', title); formData.append('description', description); formData.append('link', link);
+      formData.append('isActive', isActive);
+      if (imageFile) formData.append('solutionImage', imageFile);
+      
+      const method = isEditMode ? 'PUT' : 'POST';
+      const endpoint = isEditMode ? `${API_BASE_URL}/cms/solutions/${editingId}` : `${API_BASE_URL}/cms/solutions`;
+      const response = await fetch(endpoint, { method, headers: { 'Authorization': `Bearer ${token}` }, body: formData });
+      if (!response.ok) { const e = await response.json(); throw new Error(e.message || 'Failed'); }
+      toast.success(isEditMode ? 'Solution updated!' : 'Solution added!');
+      setIsAddModalOpen(false); fetchSolutions();
+    } catch (err) { toast.error(err.message || 'Error saving solution'); }
+    finally { setIsSubmitting(false); }
+  };
+
+  const confirmDelete = (id) => { setSolutionToDelete(id); setDeleteModalOpen(true); };
+  const handleDelete = async () => {
+    if (!solutionToDelete) return;
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/cms/solutions/${solutionToDelete}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+      if (!response.ok) throw new Error('Failed to delete');
+      toast.success('Solution deleted'); setDeleteModalOpen(false); setSolutionToDelete(null); fetchSolutions();
+    } catch (err) { toast.error(err.message || 'Error deleting solution'); }
+  };
+
+  const getFullImageUrl = (path) => {
+    if (!path) return '';
+    const base = (API_BASE_URL || 'http://localhost:5000/api').replace('/api', '');
+    return `${base}${path.startsWith('/') ? '' : '/'}${path}`;
+  };
+
+  return (
+    <div className="space-y-6 relative">
+      {loading && solutions.length === 0 && (
+        <div className="absolute inset-0 bg-white/50 z-40 flex items-center justify-center rounded-2xl">
+          <Loader2 className="animate-spin text-[#8CC63F]" size={48} />
+        </div>
+      )}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">Charging Solutions</h2>
+          <p className="text-gray-500 text-sm">Manage dynamic charging solutions shown on the homepage</p>
+        </div>
+        <button onClick={openAddModal} className="bg-[#8CC63F] hover:bg-[#116631] text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-colors">
+          <Plus size={16} /> Add Solution
+        </button>
+      </div>
+      {error && <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">{error}</div>}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left min-w-[800px]">
+            <thead>
+              <tr className="border-b border-gray-100 bg-gray-50">
+                <th className="px-5 py-4 text-xs font-bold text-gray-500 uppercase">Image</th>
+                <th className="px-5 py-4 text-xs font-bold text-gray-500 uppercase">Title</th>
+                <th className="px-5 py-4 text-xs font-bold text-gray-500 uppercase">Description</th>
+                <th className="px-5 py-4 text-xs font-bold text-gray-500 uppercase">Status</th>
+                <th className="px-5 py-4 text-xs font-bold text-gray-500 uppercase text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {solutions.length === 0 && !loading ? (
+                <tr><td colSpan="5" className="px-6 py-10 text-center text-sm text-gray-400">No solutions found. Add one to get started.</td></tr>
+              ) : solutions.map((sol) => (
+                <tr key={sol._id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="px-5 py-4">
+                    <div className="w-24 h-16 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 flex items-center justify-center">
+                      {sol.image ? <img src={getFullImageUrl(sol.image)} alt={sol.title} className="w-full h-full object-cover" /> : <ImageIcon size={18} className="text-gray-400" />}
+                    </div>
+                  </td>
+                  <td className="px-5 py-4"><span className="text-sm font-semibold text-gray-800">{sol.title}</span></td>
+                  <td className="px-5 py-4"><span className="text-sm text-gray-500 max-w-xs truncate inline-block">{sol.description}</span></td>
+                  <td className="px-5 py-4">
+                    <span className={`text-xs font-bold px-2 py-1 rounded-full ${sol.isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'}`}>{sol.isActive ? 'Active' : 'Inactive'}</span>
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center justify-center gap-3">
+                      <button onClick={() => openEditModal(sol)} className="text-gray-400 hover:text-emerald-600 transition-colors"><Edit2 size={15} /></button>
+                      <button onClick={() => confirmDelete(sol._id)} className="text-gray-400 hover:text-red-500 transition-colors"><Trash2 size={15} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl my-auto">
+            <form onSubmit={handleSubmit}>
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="text-lg font-bold text-gray-900">{isEditMode ? 'Edit Solution' : 'Add Solution'}</h2>
+                <button type="button" onClick={() => setIsAddModalOpen(false)} className="text-gray-400 hover:bg-gray-100 p-1.5 rounded-lg"><X size={20} /></button>
+              </div>
+              <div className="p-6 space-y-4">
+                <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
+                <div onClick={() => fileInputRef.current.click()} className={`border-2 border-dashed ${imagePreview ? 'border-[#8CC63F]' : 'border-gray-200'} rounded-xl p-6 flex flex-col items-center text-center cursor-pointer hover:border-[#8CC63F] transition-colors relative overflow-hidden`}>
+                  {imagePreview ? (
+                    <img src={imagePreview} alt="Preview" className="absolute inset-0 w-full h-full object-contain opacity-90 bg-gray-100" />
+                  ) : (
+                    <><UploadCloud size={24} className="text-gray-400 mb-2" /><p className="text-sm font-medium text-gray-600">Click to upload image</p><p className="text-xs text-gray-400">PNG, JPG (Square/Landscape)</p></>
+                  )}
+                </div>
+                <input type="text" required value={title} onChange={e => setTitle(e.target.value)} placeholder="Solution Title" className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F]" />
+                <textarea required value={description} onChange={e => setDescription(e.target.value)} placeholder="Short Description" rows={2} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] resize-y" />
+                <div className="flex items-center gap-4 mt-2">
+                  <label className="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+                    <input type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} className="w-4 h-4 text-[#8CC63F] rounded border-gray-300 focus:ring-[#8CC63F]" />
+                    Active in App/Website
+                  </label>
+                </div>
+              </div>
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+                <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button type="submit" disabled={isSubmitting} className="px-4 py-2 text-sm font-semibold text-white bg-[#8CC63F] hover:bg-[#116631] disabled:opacity-50 rounded-lg flex items-center gap-2">
+                  {isSubmitting ? <><Loader2 size={14} className="animate-spin" /> Saving...</> : (isEditMode ? 'Save Changes' : 'Add Solution')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+            <div className="p-6 text-center">
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3"><AlertTriangle size={28} className="text-red-500" /></div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Solution?</h3>
+              <p className="text-sm text-gray-500">This action cannot be undone.</p>
+            </div>
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
+              <button onClick={() => { setDeleteModalOpen(false); setSolutionToDelete(null); }} className="flex-1 px-4 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
+              <button onClick={handleDelete} className="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-red-500 rounded-lg hover:bg-red-600">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ─── Main CMSView with Tabs ───────────────────────────────────────────────────
 const CMSView = () => {
   const [activeTab, setActiveTab] = useState('banners');
@@ -721,6 +929,7 @@ const CMSView = () => {
     { id: 'banners', label: 'Banner Management', icon: ImageIcon },
     { id: 'legal', label: 'Legal Documents', icon: FileText },
     { id: 'faq', label: 'FAQ Management', icon: HelpCircle },
+    { id: 'solutions', label: 'Charging Solutions', icon: Zap },
   ];
 
   return (
@@ -753,6 +962,7 @@ const CMSView = () => {
       {activeTab === 'banners' && <BannerTab />}
       {activeTab === 'legal' && <LegalTab />}
       {activeTab === 'faq' && <FAQTab />}
+      {activeTab === 'solutions' && <ChargingSolutionsTab />}
     </div>
   );
 };

@@ -9,10 +9,10 @@ import {
   Ticket, BarChart3, ClipboardList, ShieldCheck, Settings, Zap, X, LogOut,
   AlertTriangle, Tag, Newspaper, CalendarCheck, Banknote,
   ShoppingBag, Package, ListOrdered, ChevronDown, ChevronRight, Grid3X3, MessageSquare, Tag as TagIcon,
-  MessageCircleWarning
+  MessageCircleWarning, HelpCircle, Star
 } from 'lucide-react';
 
-const Sidebar = ({ onClose }) => {
+const Sidebar = ({ onClose, isExpanded = true }) => {
   const navigate = useNavigate();
   const { themeMode } = useTheme();
   const [isSystemDark, setIsSystemDark] = useState(false);
@@ -47,6 +47,9 @@ const Sidebar = ({ onClose }) => {
     { name: 'Pricing Management', icon: TagIcon, path: '/pricing' },
     { name: 'Ticket Management', icon: Ticket, path: '/tickets' },
     { name: 'Support Center', icon: Headphones, path: '/support' },
+    { name: 'Enquiries', icon: MessageSquare, path: '/enquiries' },
+    { name: 'Customer Reviews', icon: Star, path: '/reviews' },
+    { name: 'FAQ Management', icon: HelpCircle, path: '/faq' },
   ];
 
   // Bottom items
@@ -101,19 +104,22 @@ const Sidebar = ({ onClose }) => {
       to={item.path}
       onClick={onClose}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-semibold ${
+        `flex items-center ${isExpanded ? 'px-4' : 'justify-center px-2'} py-3 rounded-xl transition-all duration-300 text-sm font-semibold ${
           isActive
             ? 'bg-[#8CC63F] text-white shadow-md shadow-emerald-900/20'
             : 'text-gray-600 hover:bg-emerald-50/50 hover:text-gray-900'
         }`
       }
+      title={!isExpanded ? item.name : ''}
     >
       {({ isActive }) => (
         <>
-          <div className={`flex items-center justify-center ${isActive ? 'text-white' : 'text-[#8CC63F]'}`}>
-            <item.icon size={18} strokeWidth={2.5} />
+          <div className={`flex items-center justify-center flex-shrink-0 transition-all duration-300 ${isActive ? 'text-white' : 'text-[#8CC63F]'}`}>
+            <item.icon size={isExpanded ? 18 : 22} strokeWidth={2.5} className="transition-all duration-300" />
           </div>
-          <span>{item.name}</span>
+          <span className={`transition-all duration-300 overflow-hidden whitespace-nowrap ${isExpanded ? 'max-w-[200px] opacity-100 ml-3' : 'max-w-0 opacity-0 ml-0'}`}>
+            {item.name}
+          </span>
         </>
       )}
     </NavLink>
@@ -121,16 +127,16 @@ const Sidebar = ({ onClose }) => {
 
   return (
     <>
-      <div className="w-64 h-full bg-white border-r border-gray-100 flex flex-col flex-shrink-0 shadow-sm z-40 relative">
+      <div className={`${isExpanded ? 'w-64' : 'w-[84px]'} h-full bg-white border-r border-gray-100 flex flex-col flex-shrink-0 shadow-sm z-40 relative transition-all duration-300 ease-in-out`}>
         {/* Logo */}
-        <div className="p-3 flex items-start justify-between border-b border-gray-100 mb-2">
-          <div className="flex items-center gap-3">
+        <div className={`p-3 flex items-start ${isExpanded ? 'justify-between' : 'justify-center'} border-b border-gray-100 mb-2 transition-all duration-300`}>
+          <div className="flex items-center gap-3 overflow-hidden">
             {isDarkMode ? (
-              <img src="/logo.png" alt="E-Bharat Logo" className="w-[68px] h-[68px] object-contain flex-shrink-0" />
+              <img src="/logo.png" alt="E-Bharat Logo" className={`object-contain flex-shrink-0 transition-all duration-300 ${isExpanded ? 'w-[68px] h-[68px]' : 'w-10 h-10'}`} />
             ) : (
-              <img src="/logo/2nd%20Theme%20No%20Background.png" alt="E-Bharat Logo" className="w-[68px] h-[68px] object-contain flex-shrink-0" />
+              <img src="/logo/2nd%20Theme%20No%20Background.png" alt="E-Bharat Logo" className={`object-contain flex-shrink-0 transition-all duration-300 ${isExpanded ? 'w-[68px] h-[68px]' : 'w-10 h-10'}`} />
             )}
-            <div className="flex flex-col">
+            <div className={`flex flex-col transition-all duration-300 overflow-hidden whitespace-nowrap ${isExpanded ? 'max-w-[200px] opacity-100' : 'max-w-0 opacity-0'}`}>
               <div className="flex items-center gap-1 font-semibold text-xl tracking-tight text-gray-900">
                 e-Bharat <span className="bg-[#ED811B] text-white px-1.5 py-0.5 rounded text-xs ml-0.5 mt-0.5">EV</span>
               </div>
@@ -139,7 +145,7 @@ const Sidebar = ({ onClose }) => {
               </span>
             </div>
           </div>
-          {onClose && (
+          {onClose && isExpanded && (
             <button onClick={onClose} className="md:hidden text-gray-400 hover:text-gray-800 transition-colors p-1 -mr-2">
               <X size={24} />
             </button>
@@ -156,37 +162,43 @@ const Sidebar = ({ onClose }) => {
           <div>
             <button
               onClick={() => setMarketplaceOpen(!marketplaceOpen)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-semibold text-gray-600 hover:bg-emerald-50/50 hover:text-gray-900 w-full"
+              className={`flex items-center ${isExpanded ? 'px-4' : 'justify-center px-2'} py-3 rounded-xl transition-all duration-300 text-sm font-semibold text-gray-600 hover:bg-emerald-50/50 hover:text-gray-900 w-full`}
+              title={!isExpanded ? "Marketplace" : ""}
             >
-              <div className="flex items-center justify-center text-[#8CC63F]">
-                <ShoppingBag size={18} strokeWidth={2.5} />
+              <div className="flex items-center justify-center flex-shrink-0 text-[#8CC63F] transition-all duration-300">
+                <ShoppingBag size={isExpanded ? 18 : 22} strokeWidth={2.5} className="transition-all duration-300" />
               </div>
-              <span className="flex-1 text-left">Marketplace</span>
-              {marketplaceOpen
-                ? <ChevronDown size={16} className="text-gray-400" />
-                : <ChevronRight size={16} className="text-gray-400" />}
+              <div className={`flex items-center justify-between flex-1 transition-all duration-300 overflow-hidden whitespace-nowrap ${isExpanded ? 'max-w-[200px] opacity-100 ml-3' : 'max-w-0 opacity-0 ml-0'}`}>
+                <span className="text-left">Marketplace</span>
+                {marketplaceOpen
+                  ? <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
+                  : <ChevronRight size={16} className="text-gray-400 flex-shrink-0" />}
+              </div>
             </button>
             {marketplaceOpen && (
-              <div className="ml-4 mt-1 space-y-1 border-l-2 border-[#8CC63F]/20 pl-3">
+              <div className={isExpanded ? "ml-4 mt-1 space-y-1 border-l-2 border-[#8CC63F]/20 pl-3 transition-all duration-300" : "mt-1 space-y-1 transition-all duration-300"}>
                 {marketplaceItems.map((item) => (
                   <NavLink
                     key={item.name}
                     to={item.path}
                     onClick={onClose}
                     className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-semibold ${
+                      `flex items-center ${isExpanded ? 'px-3' : 'justify-center px-2'} py-2.5 rounded-xl transition-all duration-300 text-sm font-semibold ${
                         isActive
                           ? 'bg-[#8CC63F] text-white shadow-md shadow-emerald-900/20'
                           : 'text-gray-600 hover:bg-emerald-50/50 hover:text-gray-900'
                       }`
                     }
+                    title={!isExpanded ? item.name : ''}
                   >
                     {({ isActive }) => (
                       <>
-                        <div className={`flex items-center justify-center ${isActive ? 'text-white' : 'text-[#8CC63F]'}`}>
-                          <item.icon size={16} strokeWidth={2.5} />
+                        <div className={`flex items-center justify-center flex-shrink-0 transition-all duration-300 ${isActive ? 'text-white' : 'text-[#8CC63F]'}`}>
+                          <item.icon size={16} strokeWidth={2.5} className="transition-all duration-300" />
                         </div>
-                        <span>{item.name}</span>
+                        <span className={`transition-all duration-300 overflow-hidden whitespace-nowrap ${isExpanded ? 'max-w-[200px] opacity-100 ml-3' : 'max-w-0 opacity-0 ml-0'}`}>
+                          {item.name}
+                        </span>
                       </>
                     )}
                   </NavLink>
@@ -204,12 +216,13 @@ const Sidebar = ({ onClose }) => {
         <div className="p-4 border-t border-gray-100 bg-white z-10">
           <button
             onClick={handleLogoutClick}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all duration-200 text-sm font-semibold text-red-600 hover:bg-red-50 hover:text-red-700"
+            className={`flex items-center ${isExpanded ? 'px-4' : 'justify-center px-2'} w-full py-3 rounded-xl transition-all duration-300 text-sm font-semibold text-red-600 hover:bg-red-50 hover:text-red-700`}
+            title={!isExpanded ? "Logout" : ""}
           >
-            <div className="flex items-center justify-center text-red-500">
-              <LogOut size={18} strokeWidth={2.5} />
+            <div className="flex items-center justify-center flex-shrink-0 text-red-500 transition-all duration-300">
+              <LogOut size={isExpanded ? 18 : 22} strokeWidth={2.5} className="transition-all duration-300" />
             </div>
-            <span>Logout</span>
+            <span className={`transition-all duration-300 overflow-hidden whitespace-nowrap ${isExpanded ? 'max-w-[200px] opacity-100 ml-3' : 'max-w-0 opacity-0 ml-0'}`}>Logout</span>
           </button>
         </div>
       </div>
