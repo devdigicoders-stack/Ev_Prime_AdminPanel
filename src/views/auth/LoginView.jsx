@@ -132,9 +132,6 @@ const LoginView = () => {
                 />
                 <span className="font-medium">Remember me</span>
               </label>
-              <a href="#" className="font-semibold text-[#8CC63F] hover:text-[#8CC63F] transition-colors">
-                Forgot Password?
-              </a>
             </div>
 
             {/* Submit Button */}
