@@ -46,9 +46,9 @@ const SettingsView = () => {
     youtubeUrl: 'https://youtube.com',
     twitterUrl: 'https://twitter.com',
     tawkEnabled: true,
-    tawkPropertyId: '',
-    tawkWidgetId: 'default',
-    tawkDirectChatUrl: '',
+    tawkPropertyId: '6a787fd78775771d44219111',
+    tawkWidgetId: '1jvjb6ouh',
+    tawkDirectChatUrl: 'https://embed.tawk.to/6a787fd78775771d44219111/1jvjb6ouh',
   });
 
   // Billing State
