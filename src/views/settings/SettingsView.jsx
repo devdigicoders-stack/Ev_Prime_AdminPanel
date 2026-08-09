@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Bell, Palette, CreditCard, Link as LinkIcon, Upload, CheckCircle2, ChevronRight, Globe, Clock, DollarSign, Loader2, Share2, Phone, Mail, MapPin } from 'lucide-react';
+import { User, Bell, Palette, CreditCard, Link as LinkIcon, Upload, CheckCircle2, ChevronRight, Globe, Clock, DollarSign, Loader2, Share2, Phone, Mail, MapPin, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -45,6 +45,10 @@ const SettingsView = () => {
     linkedinUrl: 'https://linkedin.com',
     youtubeUrl: 'https://youtube.com',
     twitterUrl: 'https://twitter.com',
+    tawkEnabled: true,
+    tawkPropertyId: '',
+    tawkWidgetId: 'default',
+    tawkDirectChatUrl: '',
   });
 
   // Billing State
@@ -455,9 +459,62 @@ const SettingsView = () => {
                 </div>
               </div>
 
+              <div className="h-px w-full bg-gray-100 mb-8"></div>
+
+              {/* Tawk.to Live Chat Settings */}
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+                    <MessageSquare size={14} className="text-[#8CC63F]" /> Tawk.to Live Chat Integration
+                  </h4>
+                  <div 
+                    onClick={() => handleSettingsChange('tawkEnabled', !settings.tawkEnabled)} 
+                    className={`w-11 h-6 rounded-full relative cursor-pointer transition-colors ${settings.tawkEnabled ? 'bg-emerald-500' : 'bg-gray-200'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${settings.tawkEnabled ? 'left-6' : 'left-1'}`}></div>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 font-medium mb-4">Enable Tawk.to live chat widget on the website. Enter your Property ID and Widget ID from your Tawk.to dashboard.</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Property ID</label>
+                    <input 
+                      type="text" 
+                      value={settings.tawkPropertyId || ''} 
+                      onChange={(e) => handleSettingsChange('tawkPropertyId', e.target.value)} 
+                      placeholder="e.g. 66e1234567890abcdef"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm font-mono" 
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Widget ID</label>
+                    <input 
+                      type="text" 
+                      value={settings.tawkWidgetId || 'default'} 
+                      onChange={(e) => handleSettingsChange('tawkWidgetId', e.target.value)} 
+                      placeholder="e.g. 1h2345678 or default"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm font-mono" 
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Direct Chat URL (Optional)</label>
+                    <input 
+                      type="url" 
+                      value={settings.tawkDirectChatUrl || ''} 
+                      onChange={(e) => handleSettingsChange('tawkDirectChatUrl', e.target.value)} 
+                      placeholder="e.g. https://tawk.to/chat/PROPERTY_ID/WIDGET_ID"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm" 
+                    />
+                  </div>
+                </div>
+              </div>
+
               <div className="flex justify-end pt-6 border-t border-gray-100">
                 <button onClick={saveSettings} disabled={savingSettings} className="bg-[#8CC63F] hover:bg-[#116631] text-white px-8 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors shadow-sm disabled:opacity-70">
-                  {savingSettings ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} strokeWidth={2.5} />} Save Contact & Social Links
+                  {savingSettings ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} strokeWidth={2.5} />} Save Settings
                 </button>
               </div>
             </div>
