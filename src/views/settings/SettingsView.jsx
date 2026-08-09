@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Bell, Palette, CreditCard, Link as LinkIcon, Upload, CheckCircle2, ChevronRight, Globe, Clock, DollarSign, Loader2 } from 'lucide-react';
+import { User, Bell, Palette, CreditCard, Link as LinkIcon, Upload, CheckCircle2, ChevronRight, Globe, Clock, DollarSign, Loader2, Share2, Phone, Mail, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -37,6 +37,14 @@ const SettingsView = () => {
     stripeEnabled: true,
     awsEnabled: true,
     zendeskEnabled: false,
+    phone: '+91 98765 43210',
+    contactEmail: 'hello@bharatevprime.com',
+    address: 'New Delhi, India',
+    facebookUrl: 'https://facebook.com',
+    instagramUrl: 'https://instagram.com',
+    linkedinUrl: 'https://linkedin.com',
+    youtubeUrl: 'https://youtube.com',
+    twitterUrl: 'https://twitter.com',
   });
 
   // Billing State
@@ -179,6 +187,7 @@ const SettingsView = () => {
 
   const tabs = [
     { id: 'general', label: 'General Info', icon: User },
+    { id: 'contactSocial', label: 'Contact & Social Links', icon: Share2 },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'billing', label: 'Billing & Plans', icon: CreditCard },
@@ -323,6 +332,134 @@ const SettingsView = () => {
                 </button>
               </div>
 
+            </div>
+          )}
+
+          {activeTab === 'contactSocial' && (
+            <div className="max-w-2xl">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Contact & Social Media Links</h3>
+              <p className="text-xs text-gray-500 font-medium mb-6">Update contact details and social media links displayed across the website.</p>
+
+              {/* Contact Information */}
+              <div className="mb-8">
+                <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <Phone size={14} className="text-[#8CC63F]" /> Website Contact Information
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Phone Number</label>
+                    <div className="relative">
+                      <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input 
+                        type="text" 
+                        value={settings.phone || ''} 
+                        onChange={(e) => handleSettingsChange('phone', e.target.value)} 
+                        placeholder="+91 98765 43210"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm" 
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Contact Email</label>
+                    <div className="relative">
+                      <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input 
+                        type="email" 
+                        value={settings.contactEmail || ''} 
+                        onChange={(e) => handleSettingsChange('contactEmail', e.target.value)} 
+                        placeholder="hello@bharatevprime.com"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">Office Address</label>
+                    <div className="relative">
+                      <MapPin size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input 
+                        type="text" 
+                        value={settings.address || ''} 
+                        onChange={(e) => handleSettingsChange('address', e.target.value)} 
+                        placeholder="New Delhi, India"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm" 
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="h-px w-full bg-gray-100 mb-8"></div>
+
+              {/* Social Media Links */}
+              <div className="mb-8">
+                <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <Share2 size={14} className="text-[#8CC63F]" /> Social Media URLs
+                </h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Facebook URL</label>
+                    <input 
+                      type="url" 
+                      value={settings.facebookUrl || ''} 
+                      onChange={(e) => handleSettingsChange('facebookUrl', e.target.value)} 
+                      placeholder="https://facebook.com/yourpage"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm" 
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Instagram URL</label>
+                    <input 
+                      type="url" 
+                      value={settings.instagramUrl || ''} 
+                      onChange={(e) => handleSettingsChange('instagramUrl', e.target.value)} 
+                      placeholder="https://instagram.com/yourhandle"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm" 
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">LinkedIn URL</label>
+                    <input 
+                      type="url" 
+                      value={settings.linkedinUrl || ''} 
+                      onChange={(e) => handleSettingsChange('linkedinUrl', e.target.value)} 
+                      placeholder="https://linkedin.com/company/yourpage"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm" 
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">YouTube URL</label>
+                    <input 
+                      type="url" 
+                      value={settings.youtubeUrl || ''} 
+                      onChange={(e) => handleSettingsChange('youtubeUrl', e.target.value)} 
+                      placeholder="https://youtube.com/@yourchannel"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm" 
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-1">Twitter / X URL</label>
+                    <input 
+                      type="url" 
+                      value={settings.twitterUrl || ''} 
+                      onChange={(e) => handleSettingsChange('twitterUrl', e.target.value)} 
+                      placeholder="https://twitter.com/yourhandle"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-6 border-t border-gray-100">
+                <button onClick={saveSettings} disabled={savingSettings} className="bg-[#8CC63F] hover:bg-[#116631] text-white px-8 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors shadow-sm disabled:opacity-70">
+                  {savingSettings ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} strokeWidth={2.5} />} Save Contact & Social Links
+                </button>
+              </div>
             </div>
           )}
 
