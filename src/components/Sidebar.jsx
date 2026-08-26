@@ -47,6 +47,7 @@ const Sidebar = ({ onClose, isExpanded = true }) => {
     { name: 'Pricing Management', icon: TagIcon, path: '/pricing' },
     { name: 'Ticket Management', icon: Ticket, path: '/tickets' },
     { name: 'Support Center', icon: Headphones, path: '/support' },
+    { name: 'Live Chat', icon: MessageSquare, path: '/live-chat' },
     { name: 'Enquiries', icon: MessageSquare, path: '/enquiries' },
     { name: 'Newsletter', icon: Mail, path: '/newsletter' },
     { name: 'Our Team', icon: Users, path: '/our-team' },
