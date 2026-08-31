@@ -49,6 +49,7 @@ const Sidebar = ({ onClose, isExpanded = true }) => {
     { name: 'Pricing Management', icon: TagIcon, path: '/pricing', key: 'pricing' },
     { name: 'Ticket Management', icon: Ticket, path: '/tickets', key: 'tickets' },
     { name: 'Support Center', icon: Headphones, path: '/support', key: 'support' },
+    { name: 'Live Chat', icon: MessageSquare, path: '/live-chat', key: 'live-chat' },
     { name: 'Enquiries', icon: MessageSquare, path: '/enquiries', key: 'enquiries' },
     { name: 'Newsletter', icon: Mail, path: '/newsletter', key: 'newsletter' },
     { name: 'Our Team', icon: Users, path: '/our-team', key: 'our-team' },

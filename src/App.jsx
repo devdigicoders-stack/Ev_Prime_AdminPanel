@@ -43,6 +43,7 @@ import BlogManagementView from './views/blog/BlogManagementView';
 import NewsletterView from './views/newsletter/NewsletterView';
 import TeamManagementView from './views/team/TeamManagementView';
 import SubAdminManagementView from './views/subadmin/SubAdminManagementView';
+import LiveChatView from './views/live-chat/LiveChatView';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -79,6 +80,7 @@ function App() {
         <Route path="/" element={<AdminLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<DashboardView />} />
+          <Route path="live-chat" element={<LiveChatView />} />
           <Route path="users" element={<UserManagementView />} />
           <Route path="stations" element={<StationManagementView />} />
           <Route path="partners" element={<PartnerManagementView />} />
