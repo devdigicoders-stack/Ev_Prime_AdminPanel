@@ -47,6 +47,7 @@ import LiveChatView from './views/live-chat/LiveChatView';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -77,52 +78,52 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginView />} />
         
-        <Route path="/" element={<AdminLayout />}>
+        <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardView />} />
-          <Route path="live-chat" element={<LiveChatView />} />
-          <Route path="users" element={<UserManagementView />} />
-          <Route path="stations" element={<StationManagementView />} />
-          <Route path="partners" element={<PartnerManagementView />} />
-          <Route path="partner-complaints" element={<PartnerComplaintsView />} />
-          <Route path="partner-complaints/:id" element={<PartnerComplaintDetailView />} />
-          <Route path="franchise" element={<FranchiseManagementView />} />
-          <Route path="payments" element={<PaymentMonitoringView />} />
-          <Route path="refunds" element={<RefundManagementView />} />
-          <Route path="analytics" element={<AnalyticsView />} />
-          <Route path="carbon" element={<CarbonDashboardView />} />
-          <Route path="gov" element={<GovernmentDashboardView />} />
-          <Route path="heatmap" element={<HeatmapView />} />
-          <Route path="cities" element={<CityAnalyticsView />} />
-          <Route path="cms" element={<CMSView />} />
-          <Route path="enquiries" element={<EnquiriesView />} />
-          <Route path="faq" element={<FAQManagementView />} />
-          <Route path="reviews" element={<CustomerReviewsView />} />
-          <Route path="blog" element={<BlogManagementView />} />
-          <Route path="newsletter" element={<NewsletterView />} />
-          <Route path="our-team" element={<TeamManagementView />} />
-          <Route path="sub-admins" element={<SubAdminManagementView />} />
-          <Route path="tickets" element={<TicketManagementView />} />
-          <Route path="offers" element={<OfferManagementView />} />
-          <Route path="news" element={<NewsManagementView />} />
-          <Route path="bookings" element={<BookingManagementView />} />
-          <Route path="emergency" element={<EmergencyManagementView />} />
-          <Route path="reports" element={<ReportsView />} />
-          <Route path="support" element={<SupportCenterView />} />
-          <Route path="audit" element={<AuditLogView />} />
-          <Route path="security" element={<SecurityCenterView />} />
-          <Route path="settings" element={<SettingsView />} />
+          <Route path="dashboard" element={<ProtectedRoute permission="dashboard"><DashboardView /></ProtectedRoute>} />
+          <Route path="live-chat" element={<ProtectedRoute permission="live-chat"><LiveChatView /></ProtectedRoute>} />
+          <Route path="users" element={<ProtectedRoute permission="users"><UserManagementView /></ProtectedRoute>} />
+          <Route path="stations" element={<ProtectedRoute permission="stations"><StationManagementView /></ProtectedRoute>} />
+          <Route path="partners" element={<ProtectedRoute permission="partners"><PartnerManagementView /></ProtectedRoute>} />
+          <Route path="partner-complaints" element={<ProtectedRoute permission="partner-complaints"><PartnerComplaintsView /></ProtectedRoute>} />
+          <Route path="partner-complaints/:id" element={<ProtectedRoute permission="partner-complaints"><PartnerComplaintDetailView /></ProtectedRoute>} />
+          <Route path="franchise" element={<ProtectedRoute permission="franchise"><FranchiseManagementView /></ProtectedRoute>} />
+          <Route path="payments" element={<ProtectedRoute permission="payments"><PaymentMonitoringView /></ProtectedRoute>} />
+          <Route path="refunds" element={<ProtectedRoute permission="refunds"><RefundManagementView /></ProtectedRoute>} />
+          <Route path="analytics" element={<ProtectedRoute permission="analytics"><AnalyticsView /></ProtectedRoute>} />
+          <Route path="carbon" element={<ProtectedRoute permission="carbon"><CarbonDashboardView /></ProtectedRoute>} />
+          <Route path="gov" element={<ProtectedRoute permission="gov"><GovernmentDashboardView /></ProtectedRoute>} />
+          <Route path="heatmap" element={<ProtectedRoute permission="heatmap"><HeatmapView /></ProtectedRoute>} />
+          <Route path="cities" element={<ProtectedRoute permission="cities"><CityAnalyticsView /></ProtectedRoute>} />
+          <Route path="cms" element={<ProtectedRoute permission="cms"><CMSView /></ProtectedRoute>} />
+          <Route path="enquiries" element={<ProtectedRoute permission="enquiries"><EnquiriesView /></ProtectedRoute>} />
+          <Route path="faq" element={<ProtectedRoute permission="faq"><FAQManagementView /></ProtectedRoute>} />
+          <Route path="reviews" element={<ProtectedRoute permission="reviews"><CustomerReviewsView /></ProtectedRoute>} />
+          <Route path="blog" element={<ProtectedRoute permission="blog"><BlogManagementView /></ProtectedRoute>} />
+          <Route path="newsletter" element={<ProtectedRoute permission="newsletter"><NewsletterView /></ProtectedRoute>} />
+          <Route path="our-team" element={<ProtectedRoute permission="our-team"><TeamManagementView /></ProtectedRoute>} />
+          <Route path="sub-admins" element={<ProtectedRoute superAdminOnly={true}><SubAdminManagementView /></ProtectedRoute>} />
+          <Route path="tickets" element={<ProtectedRoute permission="tickets"><TicketManagementView /></ProtectedRoute>} />
+          <Route path="offers" element={<ProtectedRoute permission="offers"><OfferManagementView /></ProtectedRoute>} />
+          <Route path="news" element={<ProtectedRoute permission="news"><NewsManagementView /></ProtectedRoute>} />
+          <Route path="bookings" element={<ProtectedRoute permission="bookings"><BookingManagementView /></ProtectedRoute>} />
+          <Route path="emergency" element={<ProtectedRoute permission="emergency"><EmergencyManagementView /></ProtectedRoute>} />
+          <Route path="reports" element={<ProtectedRoute permission="reports"><ReportsView /></ProtectedRoute>} />
+          <Route path="support" element={<ProtectedRoute permission="support"><SupportCenterView /></ProtectedRoute>} />
+          <Route path="audit" element={<ProtectedRoute permission="audit"><AuditLogView /></ProtectedRoute>} />
+          <Route path="security" element={<ProtectedRoute permission="security"><SecurityCenterView /></ProtectedRoute>} />
+          <Route path="settings" element={<ProtectedRoute permission="settings"><SettingsView /></ProtectedRoute>} />
           <Route path="notifications" element={<NotificationsView />} />
           <Route path="profile" element={<ProfileView />} />
           {/* Marketplace Routes */}
-          <Route path="marketplace/products" element={<ProductManagementView />} />
-          <Route path="marketplace/orders" element={<OrderManagementView />} />
-          <Route path="marketplace/categories" element={<CategoryManagementView />} />
+          <Route path="marketplace/products" element={<ProtectedRoute permission="marketplace"><ProductManagementView /></ProtectedRoute>} />
+          <Route path="marketplace/orders" element={<ProtectedRoute permission="marketplace"><OrderManagementView /></ProtectedRoute>} />
+          <Route path="marketplace/categories" element={<ProtectedRoute permission="marketplace"><CategoryManagementView /></ProtectedRoute>} />
           {/* Feedback */}
-          <Route path="feedback" element={<FeedbackManagementView />} />
-          <Route path="pricing" element={<PricingManagementView />} />
-          <Route path="payouts" element={<PayoutManagementView />} />
-          <Route path="connectors" element={<ConnectorManagementView />} />
+          <Route path="feedback" element={<ProtectedRoute permission="feedback"><FeedbackManagementView /></ProtectedRoute>} />
+          <Route path="pricing" element={<ProtectedRoute permission="pricing"><PricingManagementView /></ProtectedRoute>} />
+          <Route path="payouts" element={<ProtectedRoute permission="payouts"><PayoutManagementView /></ProtectedRoute>} />
+          <Route path="connectors" element={<ProtectedRoute permission="connectors"><ConnectorManagementView /></ProtectedRoute>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
