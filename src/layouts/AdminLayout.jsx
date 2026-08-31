@@ -32,6 +32,7 @@ const routeTitles = {
   '/news': 'NEWS MANAGEMENT',
   '/bookings': 'BOOKING MANAGEMENT',
   '/profile': 'MY PROFILE',
+  '/sub-admins': 'SUB-ADMIN MANAGEMENT',
   '/marketplace/products': 'PRODUCT MANAGEMENT',
   '/marketplace/orders': 'ORDER MANAGEMENT',
   '/marketplace/categories': 'CATEGORY MANAGEMENT',

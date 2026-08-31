@@ -42,13 +42,16 @@ import CustomerReviewsView from './views/reviews/CustomerReviewsView';
 import BlogManagementView from './views/blog/BlogManagementView';
 import NewsletterView from './views/newsletter/NewsletterView';
 import TeamManagementView from './views/team/TeamManagementView';
+import SubAdminManagementView from './views/subadmin/SubAdminManagementView';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { NotificationProvider, useNotification } from './contexts/NotificationContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
   return (
     <ThemeProvider>
       <NotificationProvider>
+        <AuthProvider>
         <Router>
         <Toaster 
         position="top-right" 
@@ -96,6 +99,7 @@ function App() {
           <Route path="blog" element={<BlogManagementView />} />
           <Route path="newsletter" element={<NewsletterView />} />
           <Route path="our-team" element={<TeamManagementView />} />
+          <Route path="sub-admins" element={<SubAdminManagementView />} />
           <Route path="tickets" element={<TicketManagementView />} />
           <Route path="offers" element={<OfferManagementView />} />
           <Route path="news" element={<NewsManagementView />} />
@@ -122,6 +126,7 @@ function App() {
         <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </Router>
+      </AuthProvider>
       </NotificationProvider>
     </ThemeProvider>
   );

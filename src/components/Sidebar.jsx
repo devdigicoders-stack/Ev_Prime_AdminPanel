@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { NavLink, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   LayoutDashboard, Users, Handshake, Store, Wallet, RotateCcw, 
   BrainCircuit, Leaf, Landmark, Map, Building, FileText, Headphones, 
@@ -15,6 +16,7 @@ import {
 const Sidebar = ({ onClose, isExpanded = true }) => {
   const navigate = useNavigate();
   const { themeMode } = useTheme();
+  const { isSuperAdmin, hasPermission } = useAuth();
   const [isSystemDark, setIsSystemDark] = useState(false);
   
   useEffect(() => {
@@ -29,47 +31,49 @@ const Sidebar = ({ onClose, isExpanded = true }) => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
 
-  // TOP priority items
-  const topItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    { name: 'User Management', icon: Users, path: '/users' },
-    { name: 'Booking Management', icon: CalendarCheck, path: '/bookings' },
-    { name: 'Station Management', icon: Zap, path: '/stations' },
-    { name: 'Partner Management', icon: Handshake, path: '/partners' },
-    { name: 'Partner Complaints', icon: MessageCircleWarning, path: '/partner-complaints' },
-    { name: 'Payment Monitoring', icon: Wallet, path: '/payments' },
-    { name: 'Payout Requests', icon: Banknote, path: '/payouts' },
-    { name: 'Refund Management', icon: RotateCcw, path: '/refunds' },
-    { name: 'Offers Management', icon: Tag, path: '/offers' },
-    { name: 'News Management', icon: Newspaper, path: '/news' },
-    { name: 'Roadside Assistance', icon: AlertTriangle, path: '/emergency' },
-    { name: 'Feedback Management', icon: MessageSquare, path: '/feedback' },
-    { name: 'Pricing Management', icon: TagIcon, path: '/pricing' },
-    { name: 'Ticket Management', icon: Ticket, path: '/tickets' },
-    { name: 'Support Center', icon: Headphones, path: '/support' },
-    { name: 'Enquiries', icon: MessageSquare, path: '/enquiries' },
-    { name: 'Newsletter', icon: Mail, path: '/newsletter' },
-    { name: 'Our Team', icon: Users, path: '/our-team' },
-    { name: 'Customer Reviews', icon: Star, path: '/reviews' },
-    { name: 'Blog Management', icon: BookOpen, path: '/blog' },
-    { name: 'FAQ Management', icon: HelpCircle, path: '/faq' },
+  // TOP priority items — filtered by permission for subadmins
+  const allTopItems = [
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', key: 'dashboard' },
+    { name: 'User Management', icon: Users, path: '/users', key: 'users' },
+    { name: 'Booking Management', icon: CalendarCheck, path: '/bookings', key: 'bookings' },
+    { name: 'Station Management', icon: Zap, path: '/stations', key: 'stations' },
+    { name: 'Partner Management', icon: Handshake, path: '/partners', key: 'partners' },
+    { name: 'Partner Complaints', icon: MessageCircleWarning, path: '/partner-complaints', key: 'partner-complaints' },
+    { name: 'Payment Monitoring', icon: Wallet, path: '/payments', key: 'payments' },
+    { name: 'Payout Requests', icon: Banknote, path: '/payouts', key: 'payouts' },
+    { name: 'Refund Management', icon: RotateCcw, path: '/refunds', key: 'refunds' },
+    { name: 'Offers Management', icon: Tag, path: '/offers', key: 'offers' },
+    { name: 'News Management', icon: Newspaper, path: '/news', key: 'news' },
+    { name: 'Roadside Assistance', icon: AlertTriangle, path: '/emergency', key: 'emergency' },
+    { name: 'Feedback Management', icon: MessageSquare, path: '/feedback', key: 'feedback' },
+    { name: 'Pricing Management', icon: TagIcon, path: '/pricing', key: 'pricing' },
+    { name: 'Ticket Management', icon: Ticket, path: '/tickets', key: 'tickets' },
+    { name: 'Support Center', icon: Headphones, path: '/support', key: 'support' },
+    { name: 'Enquiries', icon: MessageSquare, path: '/enquiries', key: 'enquiries' },
+    { name: 'Newsletter', icon: Mail, path: '/newsletter', key: 'newsletter' },
+    { name: 'Our Team', icon: Users, path: '/our-team', key: 'our-team' },
+    { name: 'Customer Reviews', icon: Star, path: '/reviews', key: 'reviews' },
+    { name: 'Blog Management', icon: BookOpen, path: '/blog', key: 'blog' },
+    { name: 'FAQ Management', icon: HelpCircle, path: '/faq', key: 'faq' },
   ];
+  const topItems = allTopItems.filter(item => hasPermission(item.key));
 
-  // Bottom items
-  const bottomItems = [
-    { name: 'Franchise Management', icon: Store, path: '/franchise' },
-    { name: 'AI Analytics', icon: BrainCircuit, path: '/analytics' },
-    { name: 'Carbon Dashboard', icon: Leaf, path: '/carbon' },
-    { name: 'Government Dashboard', icon: Landmark, path: '/gov' },
-    { name: 'EV Heat Map', icon: Map, path: '/heatmap' },
-    { name: 'City Analytics', icon: Building, path: '/cities' },
-    { name: 'CMS', icon: FileText, path: '/cms' },
-    { name: 'Connector Types', icon: Zap, path: '/connectors' },
-    { name: 'Reports Generation', icon: BarChart3, path: '/reports' },
-    { name: 'Audit Log', icon: ClipboardList, path: '/audit' },
-    { name: 'Security Center', icon: ShieldCheck, path: '/security' },
-    { name: 'Settings', icon: Settings, path: '/settings' },
+  // Bottom items — filtered by permission
+  const allBottomItems = [
+    { name: 'Franchise Management', icon: Store, path: '/franchise', key: 'franchise' },
+    { name: 'AI Analytics', icon: BrainCircuit, path: '/analytics', key: 'analytics' },
+    { name: 'Carbon Dashboard', icon: Leaf, path: '/carbon', key: 'carbon' },
+    { name: 'Government Dashboard', icon: Landmark, path: '/gov', key: 'gov' },
+    { name: 'EV Heat Map', icon: Map, path: '/heatmap', key: 'heatmap' },
+    { name: 'City Analytics', icon: Building, path: '/cities', key: 'cities' },
+    { name: 'CMS', icon: FileText, path: '/cms', key: 'cms' },
+    { name: 'Connector Types', icon: Zap, path: '/connectors', key: 'connectors' },
+    { name: 'Reports Generation', icon: BarChart3, path: '/reports', key: 'reports' },
+    { name: 'Audit Log', icon: ClipboardList, path: '/audit', key: 'audit' },
+    { name: 'Security Center', icon: ShieldCheck, path: '/security', key: 'security' },
+    { name: 'Settings', icon: Settings, path: '/settings', key: 'settings' },
   ];
+  const bottomItems = allBottomItems.filter(item => hasPermission(item.key));
 
   const marketplaceItems = [
     { name: 'Products', icon: Package, path: '/marketplace/products' },
@@ -162,7 +166,7 @@ const Sidebar = ({ onClose, isExpanded = true }) => {
           {topItems.map(renderNavLink)}
 
           {/* Marketplace Dropdown - after top items */}
-          <div>
+          {hasPermission('marketplace') && (
             <button
               onClick={() => setMarketplaceOpen(!marketplaceOpen)}
               className={`flex items-center ${isExpanded ? 'px-4' : 'justify-center px-2'} py-3 rounded-xl transition-all duration-300 text-sm font-semibold text-gray-600 hover:bg-emerald-50/50 hover:text-gray-900 w-full`}
@@ -209,9 +213,13 @@ const Sidebar = ({ onClose, isExpanded = true }) => {
               </div>
             )}
           </div>
+          )}
 
           {/* Bottom items */}
           {bottomItems.map(renderNavLink)}
+
+          {/* Sub-Admin Management — superadmin only */}
+          {isSuperAdmin && renderNavLink({ name: 'Sub-Admin Management', icon: ShieldCheck, path: '/sub-admins' })}
 
         </div>
 
