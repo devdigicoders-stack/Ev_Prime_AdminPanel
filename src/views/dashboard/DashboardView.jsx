@@ -21,6 +21,8 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
+import { useAuth } from '../../contexts/AuthContext';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const iconMap = {
@@ -55,6 +57,7 @@ const StatCard = ({ title, value, growth, icon: Icon }) => (
 );
 
 const DashboardView = () => {
+  const { admin } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -97,7 +100,7 @@ const DashboardView = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="w-full">
           <h1 className="text-2xl font-semibold text-gray-900 mb-1">Dashboard</h1>
-          <p className="text-gray-800 font-medium text-sm sm:text-base">Welcome back, Super Admin! 👋</p>
+          <p className="text-gray-800 font-medium text-sm sm:text-base">Welcome back, {admin?.name || 'Admin'}! 👋</p>
           <p className="text-gray-400 text-xs sm:text-sm mt-0.5">Here's what's happening today.</p>
         </div>
 
