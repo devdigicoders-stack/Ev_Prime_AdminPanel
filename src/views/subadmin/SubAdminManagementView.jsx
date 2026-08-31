@@ -19,6 +19,7 @@ const ALL_PERMISSIONS = [
   { key: 'pricing', label: 'Pricing Management' },
   { key: 'tickets', label: 'Ticket Management' },
   { key: 'support', label: 'Support Center' },
+  { key: 'live-chat', label: 'Live Chat' },
   { key: 'enquiries', label: 'Enquiries' },
   { key: 'newsletter', label: 'Newsletter' },
   { key: 'our-team', label: 'Our Team' },
