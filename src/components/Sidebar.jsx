@@ -168,52 +168,53 @@ const Sidebar = ({ onClose, isExpanded = true }) => {
 
           {/* Marketplace Dropdown - after top items */}
           {hasPermission('marketplace') && (
-            <button
-              onClick={() => setMarketplaceOpen(!marketplaceOpen)}
-              className={`flex items-center ${isExpanded ? 'px-4' : 'justify-center px-2'} py-3 rounded-xl transition-all duration-300 text-sm font-semibold text-gray-600 hover:bg-emerald-50/50 hover:text-gray-900 w-full`}
-              title={!isExpanded ? "Marketplace" : ""}
-            >
-              <div className="flex items-center justify-center flex-shrink-0 text-[#8CC63F] transition-all duration-300">
-                <ShoppingBag size={isExpanded ? 18 : 22} strokeWidth={2.5} className="transition-all duration-300" />
-              </div>
-              <div className={`flex items-center justify-between flex-1 transition-all duration-300 overflow-hidden whitespace-nowrap ${isExpanded ? 'max-w-[200px] opacity-100 ml-3' : 'max-w-0 opacity-0 ml-0'}`}>
-                <span className="text-left">Marketplace</span>
-                {marketplaceOpen
-                  ? <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
-                  : <ChevronRight size={16} className="text-gray-400 flex-shrink-0" />}
-              </div>
-            </button>
-            {marketplaceOpen && (
-              <div className={isExpanded ? "ml-4 mt-1 space-y-1 border-l-2 border-[#8CC63F]/20 pl-3 transition-all duration-300" : "mt-1 space-y-1 transition-all duration-300"}>
-                {marketplaceItems.map((item) => (
-                  <NavLink
-                    key={item.name}
-                    to={item.path}
-                    onClick={onClose}
-                    className={({ isActive }) =>
-                      `flex items-center ${isExpanded ? 'px-3' : 'justify-center px-2'} py-2.5 rounded-xl transition-all duration-300 text-sm font-semibold ${
-                        isActive
-                          ? 'bg-[#8CC63F] text-white shadow-md shadow-emerald-900/20'
-                          : 'text-gray-600 hover:bg-emerald-50/50 hover:text-gray-900'
-                      }`
-                    }
-                    title={!isExpanded ? item.name : ''}
-                  >
-                    {({ isActive }) => (
-                      <>
-                        <div className={`flex items-center justify-center flex-shrink-0 transition-all duration-300 ${isActive ? 'text-white' : 'text-[#8CC63F]'}`}>
-                          <item.icon size={16} strokeWidth={2.5} className="transition-all duration-300" />
-                        </div>
-                        <span className={`transition-all duration-300 overflow-hidden whitespace-nowrap ${isExpanded ? 'max-w-[200px] opacity-100 ml-3' : 'max-w-0 opacity-0 ml-0'}`}>
-                          {item.name}
-                        </span>
-                      </>
-                    )}
-                  </NavLink>
-                ))}
-              </div>
-            )}
-          </div>
+            <div>
+              <button
+                onClick={() => setMarketplaceOpen(!marketplaceOpen)}
+                className={`flex items-center ${isExpanded ? 'px-4' : 'justify-center px-2'} py-3 rounded-xl transition-all duration-300 text-sm font-semibold text-gray-600 hover:bg-emerald-50/50 hover:text-gray-900 w-full`}
+                title={!isExpanded ? "Marketplace" : ""}
+              >
+                <div className="flex items-center justify-center flex-shrink-0 text-[#8CC63F] transition-all duration-300">
+                  <ShoppingBag size={isExpanded ? 18 : 22} strokeWidth={2.5} className="transition-all duration-300" />
+                </div>
+                <div className={`flex items-center justify-between flex-1 transition-all duration-300 overflow-hidden whitespace-nowrap ${isExpanded ? 'max-w-[200px] opacity-100 ml-3' : 'max-w-0 opacity-0 ml-0'}`}>
+                  <span className="text-left">Marketplace</span>
+                  {marketplaceOpen
+                    ? <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />
+                    : <ChevronRight size={16} className="text-gray-400 flex-shrink-0" />}
+                </div>
+              </button>
+              {marketplaceOpen && (
+                <div className={isExpanded ? "ml-4 mt-1 space-y-1 border-l-2 border-[#8CC63F]/20 pl-3 transition-all duration-300" : "mt-1 space-y-1 transition-all duration-300"}>
+                  {marketplaceItems.map((item) => (
+                    <NavLink
+                      key={item.name}
+                      to={item.path}
+                      onClick={onClose}
+                      className={({ isActive }) =>
+                        `flex items-center ${isExpanded ? 'px-3' : 'justify-center px-2'} py-2.5 rounded-xl transition-all duration-300 text-sm font-semibold ${
+                          isActive
+                            ? 'bg-[#8CC63F] text-white shadow-md shadow-emerald-900/20'
+                            : 'text-gray-600 hover:bg-emerald-50/50 hover:text-gray-900'
+                        }`
+                      }
+                      title={!isExpanded ? item.name : ''}
+                    >
+                      {({ isActive }) => (
+                        <>
+                          <div className={`flex items-center justify-center flex-shrink-0 transition-all duration-300 ${isActive ? 'text-white' : 'text-[#8CC63F]'}`}>
+                            <item.icon size={16} strokeWidth={2.5} className="transition-all duration-300" />
+                          </div>
+                          <span className={`transition-all duration-300 overflow-hidden whitespace-nowrap ${isExpanded ? 'max-w-[200px] opacity-100 ml-3' : 'max-w-0 opacity-0 ml-0'}`}>
+                            {item.name}
+                          </span>
+                        </>
+                      )}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           {/* Bottom items */}
