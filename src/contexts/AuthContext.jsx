@@ -9,15 +9,39 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('adminData');
-    if (stored) {
-      try {
-        setAdmin(JSON.parse(stored));
-      } catch {
-        localStorage.removeItem('adminData');
+    const initAuth = async () => {
+      const stored = localStorage.getItem('adminData');
+      const token = localStorage.getItem('adminToken');
+      
+      if (stored) {
+        try {
+          setAdmin(JSON.parse(stored));
+        } catch {
+          localStorage.removeItem('adminData');
+        }
       }
-    }
-    setLoading(false);
+
+      if (token) {
+        try {
+          const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+          const res = await fetch(`${baseUrl}/admin/profile`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          if (res.ok) {
+            const profileData = await res.json();
+            setAdmin(profileData);
+            localStorage.setItem('adminData', JSON.stringify(profileData));
+          }
+        } catch (err) {
+          console.error('Failed to sync admin profile:', err);
+        }
+      }
+      setLoading(false);
+    };
+
+    initAuth();
   }, []);
 
   const login = (adminData) => {

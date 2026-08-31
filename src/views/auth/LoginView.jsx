@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Lock, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../contexts/AuthContext';
 
 const LoginView = () => {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ const LoginView = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const togglePasswordVisibility = () => {
     setShowPassword((prev) => !prev);
@@ -37,7 +39,7 @@ const LoginView = () => {
 
       // Save token and user details to localStorage
       localStorage.setItem('adminToken', data.token);
-      localStorage.setItem('adminData', JSON.stringify(data));
+      login(data);
 
       toast.success('Logged in successfully!');
       navigate('/dashboard');
