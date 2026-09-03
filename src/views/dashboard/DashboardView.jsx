@@ -94,7 +94,7 @@ const DashboardView = () => {
   const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
   // Permission helpers
-  const canSeeRevenue = hasPermission('payments') || hasPermission('analytics');
+  const canSeeRevenue = hasPermission('payments') || hasPermission('analytics') || hasPermission('bookings');
   const canSeeBookings = hasPermission('bookings') || hasPermission('analytics');
   const canSeeStations = hasPermission('stations');
   const canSeeUsers = hasPermission('users');
