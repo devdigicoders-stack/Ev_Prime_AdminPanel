@@ -2,46 +2,47 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Search, ShieldCheck, XCircle, RefreshCw, Eye, EyeOff, ToggleLeft, ToggleRight } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-const ALL_PERMISSIONS = [
-  { key: 'dashboard', label: 'Dashboard' },
-  { key: 'users', label: 'User Management' },
-  { key: 'bookings', label: 'Booking Management' },
-  { key: 'stations', label: 'Station Management' },
-  { key: 'partners', label: 'Partner Management' },
-  { key: 'partner-complaints', label: 'Partner Complaints' },
-  { key: 'payments', label: 'Payment Monitoring' },
-  { key: 'payouts', label: 'Payout Requests' },
-  { key: 'refunds', label: 'Refund Management' },
-  { key: 'offers', label: 'Offers Management' },
-  { key: 'news', label: 'News Management' },
-  { key: 'emergency', label: 'Roadside Assistance' },
-  { key: 'feedback', label: 'Feedback Management' },
-  { key: 'pricing', label: 'Pricing Management' },
-  { key: 'tickets', label: 'Ticket Management' },
-  { key: 'support', label: 'Support Center' },
-  { key: 'live-chat', label: 'Live Chat' },
-  { key: 'enquiries', label: 'Enquiries' },
-  { key: 'newsletter', label: 'Newsletter' },
-  { key: 'our-team', label: 'Our Team' },
-  { key: 'reviews', label: 'Customer Reviews' },
-  { key: 'blog', label: 'Blog Management' },
-  { key: 'faq', label: 'FAQ Management' },
-  { key: 'marketplace', label: 'Marketplace' },
-  { key: 'franchise', label: 'Franchise Management' },
-  { key: 'analytics', label: 'AI Analytics' },
-  { key: 'carbon', label: 'Carbon Dashboard' },
-  { key: 'gov', label: 'Government Dashboard' },
-  { key: 'heatmap', label: 'EV Heat Map' },
-  { key: 'cities', label: 'City Analytics' },
-  { key: 'cms', label: 'CMS' },
-  { key: 'connectors', label: 'Connector Types' },
-  { key: 'reports', label: 'Reports Generation' },
-  { key: 'audit', label: 'Audit Log' },
-  { key: 'security', label: 'Security Center' },
-  { key: 'settings', label: 'Settings' },
-];
-
-const EMPTY_FORM = {
+const formatPermissionLabel = (key) => {
+  const customLabels = {
+    'users': 'User Management',
+    'bookings': 'Booking Management',
+    'stations': 'Station Management',
+    'partners': 'Partner Management',
+    'partner-complaints': 'Partner Complaints',
+    'payments': 'Payment Monitoring',
+    'payouts': 'Payout Requests',
+    'refunds': 'Refund Management',
+    'offers': 'Offers Management',
+    'news': 'News Management',
+    'emergency': 'Roadside Assistance',
+    'feedback': 'Feedback Management',
+    'pricing': 'Pricing Management',
+    'tickets': 'Ticket Management',
+    'support': 'Support Center',
+    'live-chat': 'Live Chat',
+    'enquiries': 'Enquiries',
+    'newsletter': 'Newsletter',
+    'our-team': 'Our Team',
+    'reviews': 'Customer Reviews',
+    'blog': 'Blog Management',
+    'faq': 'FAQ Management',
+    'marketplace': 'Marketplace',
+    'franchise': 'Franchise Management',
+    'analytics': 'AI Analytics',
+    'carbon': 'Carbon Dashboard',
+    'gov': 'Government Dashboard',
+    'heatmap': 'EV Heat Map',
+    'cities': 'City Analytics',
+    'cms': 'CMS',
+    'connectors': 'Connector Types',
+    'reports': 'Reports Generation',
+    'audit': 'Audit Log',
+    'security': 'Security Center',
+    'settings': 'Settings'
+  };
+  if (customLabels[key]) return customLabels[key];
+  return key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' ');
+};
   name: '',
   email: '',
   password: '',
@@ -57,6 +58,7 @@ const SubAdminManagementView = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAdmin, setEditingAdmin] = useState(null);
+  const [allPermissions, setAllPermissions] = useState([]);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -72,8 +74,12 @@ const SubAdminManagementView = () => {
       const data = await res.json();
       if (res.ok) setSubAdmins(data.data || []);
       else Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Failed to load sub-admins' });
+      
+      const permRes = await fetch(`${baseUrl}/admin/subadmins/permissions`, { headers });
+      const permData = await permRes.json();
+      if (permRes.ok) setAllPermissions(permData.data || []);
     } catch {
-      Swal.fire({ icon: 'error', title: 'Network Error', text: 'Failed to fetch sub-admins' });
+      Swal.fire({ icon: 'error', title: 'Network Error', text: 'Failed to fetch sub-admins or permissions' });
     } finally {
       setLoading(false);
     }
@@ -112,7 +118,7 @@ const SubAdminManagementView = () => {
     }));
   };
 
-  const selectAll = () => setFormData(prev => ({ ...prev, permissions: ALL_PERMISSIONS.map(p => p.key) }));
+  const selectAll = () => setFormData(prev => ({ ...prev, permissions: [...allPermissions] }));
   const clearAll = () => setFormData(prev => ({ ...prev, permissions: [] }));
 
   const handleSubmit = async (e) => {
@@ -418,7 +424,7 @@ const SubAdminManagementView = () => {
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <label className="text-sm font-semibold text-gray-700">
-                    Module Permissions ({formData.permissions.length}/{ALL_PERMISSIONS.length})
+                    Module Permissions ({formData.permissions.length}/{allPermissions.length})
                   </label>
                   <div className="flex gap-2">
                     <button type="button" onClick={selectAll} className="text-xs text-green-600 hover:underline font-semibold">Select All</button>
@@ -427,15 +433,15 @@ const SubAdminManagementView = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-52 overflow-y-auto p-3 bg-gray-50 rounded-xl border border-gray-200">
-                  {ALL_PERMISSIONS.map(p => (
-                    <label key={p.key} className="flex items-center gap-2 cursor-pointer group">
+                  {allPermissions.map(key => (
+                    <label key={key} className="flex items-center gap-2 cursor-pointer group">
                       <input
                         type="checkbox"
-                        checked={formData.permissions.includes(p.key)}
-                        onChange={() => togglePermission(p.key)}
+                        checked={formData.permissions.includes(key)}
+                        onChange={() => togglePermission(key)}
                         className="w-4 h-4 accent-green-600 rounded"
                       />
-                      <span className="text-xs font-medium text-gray-700 group-hover:text-green-700 transition-colors">{p.label}</span>
+                      <span className="text-xs font-medium text-gray-700 group-hover:text-green-700 transition-colors">{formatPermissionLabel(key)}</span>
                     </label>
                   ))}
                 </div>
