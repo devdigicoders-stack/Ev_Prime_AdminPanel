@@ -57,7 +57,7 @@ const StatCard = ({ title, value, growth, icon: Icon }) => (
 );
 
 const DashboardView = () => {
-  const { admin } = useAuth();
+  const { admin, hasPermission } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -93,6 +93,13 @@ const DashboardView = () => {
   const { stats, charts, recentActivities, topCities, topStations } = data;
   const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
+  // Permission helpers
+  const canSeeRevenue = hasPermission('payments') || hasPermission('analytics');
+  const canSeeBookings = hasPermission('bookings') || hasPermission('analytics');
+  const canSeeStations = hasPermission('stations');
+  const canSeeUsers = hasPermission('users');
+  const canSeeCarbon = hasPermission('carbon') || hasPermission('analytics');
+
   return (
     <div className="flex flex-col h-full space-y-6 pb-10">
       
@@ -113,220 +120,231 @@ const DashboardView = () => {
 
       {/* --- STATS GRID --- */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-        <StatCard title="Total Revenue" value={`₹${stats.totalRevenue.toLocaleString()}`} growth={stats.revenueGrowth} />
-        <StatCard title="Today's Revenue" value={`₹${(stats.todayRevenue || 0).toLocaleString()}`} />
-        <StatCard title="Active Chargers" value={stats.activeStations} icon={Zap} />
-        <StatCard title="Offline Chargers" value={stats.offlineStations} />
+        {canSeeRevenue && <StatCard title="Total Revenue" value={`₹${stats.totalRevenue.toLocaleString()}`} growth={stats.revenueGrowth} />}
+        {canSeeRevenue && <StatCard title="Today's Revenue" value={`₹${(stats.todayRevenue || 0).toLocaleString()}`} />}
+        {canSeeStations && <StatCard title="Active Chargers" value={stats.activeStations} icon={Zap} />}
+        {canSeeStations && <StatCard title="Offline Chargers" value={stats.offlineStations} />}
         
-        <StatCard title="Today's Sessions" value={stats.todaySessions} icon={Zap} />
-        <StatCard title="Today's Energy (kWh)" value={stats.todayEnergy} icon={Zap} />
-        <StatCard title="Total Users" value={stats.totalUsers.toLocaleString()} growth={stats.usersGrowth} />
-        <StatCard title="CO₂ Saved (Tons)" value={stats.co2Saved.toLocaleString()} growth={stats.co2Growth} icon={Leaf} />
+        {canSeeBookings && <StatCard title="Today's Sessions" value={stats.todaySessions} icon={Zap} />}
+        {canSeeBookings && <StatCard title="Today's Energy (kWh)" value={stats.todayEnergy} icon={Zap} />}
+        {canSeeUsers && <StatCard title="Total Users" value={stats.totalUsers.toLocaleString()} growth={stats.usersGrowth} />}
+        {canSeeCarbon && <StatCard title="CO₂ Saved (Tons)" value={stats.co2Saved.toLocaleString()} growth={stats.co2Growth} icon={Leaf} />}
       </div>
 
       {/* --- CHARTS ROW 1 --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-        
-        {/* Revenue Overview (Takes 2 Columns) */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6">
+      {(canSeeRevenue || canSeeBookings) && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+          
+          {/* Revenue Overview (Takes 2 Columns) */}
+          {canSeeRevenue && (
+            <div className={`${canSeeBookings ? 'lg:col-span-2' : 'lg:col-span-3'} bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6`}>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">Revenue Overview</h3>
+                <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 text-xs text-gray-600 font-medium cursor-pointer">
+                  Last 14 Days <ChevronDown size={14} className="text-gray-400" />
+                </div>
+              </div>
+              
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={charts.revenueData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => val === 0 ? '0' : `${val / 1000}K`} />
+                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} formatter={(value) => [`₹${value.toLocaleString()}`, 'Revenue']} />
+                    <Line type="monotone" dataKey="value" stroke="#8CC63F" strokeWidth={2.5} dot={{ r: 4, fill: '#8CC63F', strokeWidth: 0 }} activeDot={{ r: 6, fill: '#8CC63F', stroke: '#fff', strokeWidth: 2 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Energy Consumption (Takes 1 Column) */}
+          {canSeeBookings && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6 flex flex-col">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-900">Energy Consumption (kWh)</h3>
+                <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 text-xs text-gray-600 font-medium cursor-pointer">
+                  Last 30 Days <ChevronDown size={14} className="text-gray-400" />
+                </div>
+              </div>
+              <div className="h-[250px] w-full flex-grow">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={charts.energyData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => val === 0 ? '0' : `${val / 1000}K`} />
+                    <Tooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                    <Bar dataKey="value" fill="#16a34a" radius={[2, 2, 0, 0]} barSize={8} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* --- REAL-TIME MAP VIEW --- */}
+      {canSeeStations && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Revenue Overview</h3>
-            <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 text-xs text-gray-600 font-medium cursor-pointer">
-              Last 14 Days <ChevronDown size={14} className="text-gray-400" />
+            <h3 className="text-lg font-semibold text-gray-900">Real-Time Chargers Map</h3>
+            <div className="flex items-center gap-2">
+              <span className="flex items-center text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-1 rounded">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span> Online
+              </span>
+              <span className="flex items-center text-xs text-red-600 font-medium bg-red-50 px-2 py-1 rounded">
+                <span className="w-2 h-2 rounded-full bg-red-500 mr-1.5"></span> Offline
+              </span>
             </div>
           </div>
           
-          <div className="h-[250px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={charts.revenueData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => val === 0 ? '0' : `${val / 1000}K`} />
-                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} formatter={(value) => [`₹${value.toLocaleString()}`, 'Revenue']} />
-                <Line type="monotone" dataKey="value" stroke="#8CC63F" strokeWidth={2.5} dot={{ r: 4, fill: '#8CC63F', strokeWidth: 0 }} activeDot={{ r: 6, fill: '#8CC63F', stroke: '#fff', strokeWidth: 2 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+          <div className="h-[400px] w-full rounded-xl overflow-hidden border border-gray-200 relative z-0">
+            <MapContainer 
+              center={[20.5937, 78.9629]} 
+              zoom={4} 
+              style={{ height: '100%', width: '100%', zIndex: 0 }}
+            >
+              <TileLayer
+                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+              />
+              {stats.mapData && stats.mapData.map((station) => {
+                if (!station.latitude || !station.longitude) return null;
+                
+                // Determine if we should use a custom red icon for offline
+                const isOffline = station.status === 'Offline' || station.status === 'Maintenance';
+                const markerIcon = isOffline ? new L.Icon({
+                  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                  iconSize: [25, 41],
+                  iconAnchor: [12, 41],
+                  popupAnchor: [1, -34],
+                  shadowSize: [41, 41]
+                }) : DefaultIcon;
 
-        {/* Energy Consumption (Takes 1 Column) */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6 flex flex-col">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Energy Consumption (kWh)</h3>
-            <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 text-xs text-gray-600 font-medium cursor-pointer">
-              Last 30 Days <ChevronDown size={14} className="text-gray-400" />
-            </div>
-          </div>
-          <div className="h-[250px] w-full flex-grow">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={charts.energyData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => val === 0 ? '0' : `${val / 1000}K`} />
-                <Tooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                <Bar dataKey="value" fill="#16a34a" radius={[2, 2, 0, 0]} barSize={8} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-      </div>
-
-      {/* --- REAL-TIME MAP VIEW --- */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Real-Time Chargers Map</h3>
-          <div className="flex items-center gap-2">
-            <span className="flex items-center text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-1 rounded">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span> Online
-            </span>
-            <span className="flex items-center text-xs text-red-600 font-medium bg-red-50 px-2 py-1 rounded">
-              <span className="w-2 h-2 rounded-full bg-red-500 mr-1.5"></span> Offline
-            </span>
-          </div>
-        </div>
-        
-        <div className="h-[400px] w-full rounded-xl overflow-hidden border border-gray-200 relative z-0">
-          <MapContainer 
-            center={[20.5937, 78.9629]} 
-            zoom={4} 
-            style={{ height: '100%', width: '100%', zIndex: 0 }}
-          >
-            <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            />
-            {stats.mapData && stats.mapData.map((station) => {
-              if (!station.latitude || !station.longitude) return null;
-              
-              // Determine if we should use a custom red icon for offline
-              const isOffline = station.status === 'Offline' || station.status === 'Maintenance';
-              const markerIcon = isOffline ? new L.Icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                iconSize: [25, 41],
-                iconAnchor: [12, 41],
-                popupAnchor: [1, -34],
-                shadowSize: [41, 41]
-              }) : DefaultIcon;
-
-              return (
-                <Marker 
-                  key={station._id} 
-                  position={[station.latitude, station.longitude]}
-                  icon={markerIcon}
-                >
-                  <Popup>
-                    <div className="p-1">
-                      <h4 className="font-bold text-gray-900">{station.name}</h4>
-                      <p className="text-xs text-gray-600 mt-1">{station.location || station.city}</p>
-                      <div className="mt-2 flex items-center gap-2">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isOffline ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                          {station.status}
-                        </span>
-                        {station.connectorTypes && station.connectorTypes.length > 0 && (
-                          <span className="text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
-                            {station.connectorTypes[0].type}
+                return (
+                  <Marker 
+                    key={station._id} 
+                    position={[station.latitude, station.longitude]}
+                    icon={markerIcon}
+                  >
+                    <Popup>
+                      <div className="p-1">
+                        <h4 className="font-bold text-gray-900">{station.name}</h4>
+                        <p className="text-xs text-gray-600 mt-1">{station.location || station.city}</p>
+                        <div className="mt-2 flex items-center gap-2">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isOffline ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                            {station.status}
                           </span>
-                        )}
+                          {station.connectorTypes && station.connectorTypes.length > 0 && (
+                            <span className="text-[10px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+                              {station.connectorTypes[0].type}
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
-          </MapContainer>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+            </MapContainer>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* --- CHARTS ROW 2 --- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         
         {/* Revenue by City Donut (Takes 1 Column) */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Revenue by City</h3>
-          <div className="flex flex-col items-center">
-            <div className="h-[200px] w-full relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={charts.revenueCityData}
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={2}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {charts.revenueCityData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              {/* Center Text */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-xs text-gray-500 font-semibold">Total</span>
-                <span className="text-sm font-semibold text-gray-900">100%</span>
+        {canSeeRevenue && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Revenue by City</h3>
+            <div className="flex flex-col items-center">
+              <div className="h-[200px] w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={charts.revenueCityData}
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {charts.revenueCityData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Center Text */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-xs text-gray-500 font-semibold">Total</span>
+                  <span className="text-sm font-semibold text-gray-900">100%</span>
+                </div>
+              </div>
+              {/* Legend */}
+              <div className="w-full mt-6 px-2 space-y-3">
+                {charts.revenueCityData.map((item) => (
+                  <div key={item.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></div>
+                      <span className="text-sm font-semibold text-gray-800">{item.name}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900">{item.value}%</span>
+                  </div>
+                ))}
               </div>
             </div>
-            {/* Legend */}
-            <div className="w-full mt-6 px-2 space-y-3">
-              {charts.revenueCityData.map((item) => (
-                <div key={item.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></div>
-                    <span className="text-sm font-semibold text-gray-800">{item.name}</span>
-                  </div>
-                  <span className="text-sm font-semibold text-gray-900">{item.value}%</span>
-                </div>
-              ))}
-            </div>
           </div>
-        </div>
+        )}
 
         {/* Sessions by Connector Donut (Takes 1 Column) */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Sessions by Connector</h3>
-          <div className="flex flex-col items-center">
-            <div className="h-[200px] w-full relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={charts.sessionsConnectorData}
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={2}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {charts.sessionsConnectorData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              {/* Center Text */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-xs text-gray-500 font-semibold">Total</span>
-                <span className="text-sm font-semibold text-gray-900">100%</span>
+        {canSeeBookings && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Sessions by Connector</h3>
+            <div className="flex flex-col items-center">
+              <div className="h-[200px] w-full relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={charts.sessionsConnectorData}
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      dataKey="value"
+                      stroke="none"
+                    >
+                      {charts.sessionsConnectorData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Center Text */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-xs text-gray-500 font-semibold">Total</span>
+                  <span className="text-sm font-semibold text-gray-900">100%</span>
+                </div>
+              </div>
+              {/* Legend */}
+              <div className="w-full mt-6 px-2 space-y-3">
+                {charts.sessionsConnectorData.map((item) => (
+                  <div key={item.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></div>
+                      <span className="text-sm font-semibold text-gray-800">{item.name}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-gray-900">{item.value}%</span>
+                  </div>
+                ))}
               </div>
             </div>
-            {/* Legend */}
-            <div className="w-full mt-6 px-2 space-y-3">
-              {charts.sessionsConnectorData.map((item) => (
-                <div key={item.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></div>
-                    <span className="text-sm font-semibold text-gray-800">{item.name}</span>
-                  </div>
-                  <span className="text-sm font-semibold text-gray-900">{item.value}%</span>
-                </div>
-              ))}
-            </div>
           </div>
-        </div>
+        )}
 
         {/* Recent Activities (Takes 1 Column) */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6 flex flex-col">
@@ -356,59 +374,65 @@ const DashboardView = () => {
       </div>
 
       {/* --- LISTS ROW 3 --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        
-        {/* Top Performing Cities */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Top Performing Cities</h3>
-          <div className="flex justify-end text-xs text-gray-400 font-semibold mb-3 pr-20">Revenue</div>
-          <div className="space-y-4">
-            {topCities.map((city, index) => (
-              <div key={city.id} className="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-2 -mx-2 rounded-lg transition">
-                <div className="flex items-center gap-4">
-                  <span className={`text-lg font-semibold ${index === 0 ? 'text-emerald-500' : index === 1 ? 'text-emerald-400' : 'text-emerald-300'}`}>
-                    {index + 1}
-                  </span>
-                  <span className="text-sm font-semibold text-gray-800">{city.name}</span>
-                </div>
-                <div className="flex items-center gap-6">
-                  <span className="text-sm font-semibold text-gray-900">{city.revenue}</span>
-                  <div className="flex items-center text-emerald-600 text-xs font-semibold w-16 justify-end">
-                    <ArrowUpRight size={14} strokeWidth={3} className="mr-0.5" />
-                    {city.growth}
+      {(canSeeRevenue || canSeeStations) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+          
+          {/* Top Performing Cities */}
+          {canSeeRevenue && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">Top Performing Cities</h3>
+              <div className="flex justify-end text-xs text-gray-400 font-semibold mb-3 pr-20">Revenue</div>
+              <div className="space-y-4">
+                {topCities.map((city, index) => (
+                  <div key={city.id} className="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-2 -mx-2 rounded-lg transition">
+                    <div className="flex items-center gap-4">
+                      <span className={`text-lg font-semibold ${index === 0 ? 'text-emerald-500' : index === 1 ? 'text-emerald-400' : 'text-emerald-300'}`}>
+                        {index + 1}
+                      </span>
+                      <span className="text-sm font-semibold text-gray-800">{city.name}</span>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <span className="text-sm font-semibold text-gray-900">{city.revenue}</span>
+                      <div className="flex items-center text-emerald-600 text-xs font-semibold w-16 justify-end">
+                        <ArrowUpRight size={14} strokeWidth={3} className="mr-0.5" />
+                        {city.growth}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          )}
 
-        {/* Top Stations */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Top Stations</h3>
-          <div className="flex justify-end text-xs text-gray-400 font-semibold mb-3 pr-20">Revenue</div>
-          <div className="space-y-4">
-            {topStations.map((station, index) => (
-              <div key={station.id} className="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-2 -mx-2 rounded-lg transition">
-                <div className="flex items-center gap-4">
-                  <span className={`text-lg font-semibold ${index === 0 ? 'text-emerald-500' : index === 1 ? 'text-emerald-400' : 'text-emerald-300'}`}>
-                    {index + 1}
-                  </span>
-                  <span className="text-sm font-semibold text-gray-800">{station.name}</span>
-                </div>
-                <div className="flex items-center gap-6">
-                  <span className="text-sm font-semibold text-gray-900">{station.revenue}</span>
-                  <div className="flex items-center text-emerald-600 text-xs font-semibold w-16 justify-end">
-                    <ArrowUpRight size={14} strokeWidth={3} className="mr-0.5" />
-                    {station.growth}
+          {/* Top Stations */}
+          {canSeeStations && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6">Top Stations</h3>
+              <div className="flex justify-end text-xs text-gray-400 font-semibold mb-3 pr-20">Revenue</div>
+              <div className="space-y-4">
+                {topStations.map((station, index) => (
+                  <div key={station.id} className="flex items-center justify-between group cursor-pointer hover:bg-gray-50 p-2 -mx-2 rounded-lg transition">
+                    <div className="flex items-center gap-4">
+                      <span className={`text-lg font-semibold ${index === 0 ? 'text-emerald-500' : index === 1 ? 'text-emerald-400' : 'text-emerald-300'}`}>
+                        {index + 1}
+                      </span>
+                      <span className="text-sm font-semibold text-gray-800">{station.name}</span>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <span className="text-sm font-semibold text-gray-900">{station.revenue}</span>
+                      <div className="flex items-center text-emerald-600 text-xs font-semibold w-16 justify-end">
+                        <ArrowUpRight size={14} strokeWidth={3} className="mr-0.5" />
+                        {station.growth}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          )}
 
-      </div>
+        </div>
+      )}
 
     </div>
   );
