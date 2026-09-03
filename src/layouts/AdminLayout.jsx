@@ -147,15 +147,6 @@ const AdminLayout = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            
-            <div className="relative hidden md:block w-64">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Search here..." 
-                className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all"
-              />
-            </div>
 
             <button onClick={() => navigate('/notifications')} className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
               <Bell size={20} />
