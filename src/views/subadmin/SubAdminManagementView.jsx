@@ -43,6 +43,8 @@ const formatPermissionLabel = (key) => {
   if (customLabels[key]) return customLabels[key];
   return key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' ');
 };
+
+const EMPTY_FORM = {
   name: '',
   email: '',
   password: '',
