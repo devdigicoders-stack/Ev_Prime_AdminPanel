@@ -55,13 +55,13 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('adminToken');
   };
 
-  // true if superadmin
-  const isSuperAdmin = admin?.adminType === 'superadmin';
+  // true if superadmin (or old admin without adminType field)
+  const isSuperAdmin = !admin?.adminType || admin?.adminType === 'superadmin';
 
   // check if admin has access to a module
   const hasPermission = (module) => {
     if (!admin) return false;
-    if (admin.adminType === 'superadmin') return true;
+    if (!admin.adminType || admin.adminType === 'superadmin') return true;
     return Array.isArray(admin.permissions) && admin.permissions.includes(module);
   };
 
