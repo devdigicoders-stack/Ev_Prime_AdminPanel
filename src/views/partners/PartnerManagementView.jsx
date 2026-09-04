@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Search, ChevronDown, Plus, Edit2, Trash2, ChevronLeft, ChevronRight, X, Loader2, AlertCircle, Key, Activity, MapPin } from 'lucide-react';
+import { Search, ChevronDown, Plus, Edit2, Trash2, ChevronLeft, ChevronRight, X, Loader2, AlertCircle, Kexy, Activity, MapPin } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../contexts/AuthContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const PartnerManagementView = () => {
+  const { hasPermission } = useAuth();
   const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -351,15 +353,17 @@ const PartnerManagementView = () => {
               <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
             
-            <button 
-              onClick={() => {
-                setFormData(initialFormState);
-                setIsAddModalOpen(true);
-              }}
-              className="w-full sm:w-auto bg-[#8CC63F] hover:bg-[#116631] text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
-            >
-              <Plus size={18} strokeWidth={2.5} /> Add Partner
-            </button>
+            {hasPermission('partners', 'add') && (
+              <button 
+                onClick={() => {
+                  setFormData(initialFormState);
+                  setIsAddModalOpen(true);
+                }}
+                className="w-full sm:w-auto bg-[#8CC63F] hover:bg-[#116631] text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
+              >
+                <Plus size={18} strokeWidth={2.5} /> Add Partner
+              </button>
+            )}
           </div>
         </div>
 
@@ -429,12 +433,16 @@ const PartnerManagementView = () => {
                       <button onClick={() => fetchPartnerHistory(partner)} title="View History" className="text-gray-400 hover:text-blue-600 transition-colors p-1.5 rounded-lg hover:bg-blue-50">
                         <Activity size={16} strokeWidth={2.5} />
                       </button>
-                      <button onClick={() => openEditModal(partner)} title="Edit Partner" className="text-gray-400 hover:text-emerald-600 transition-colors p-1.5 rounded-lg hover:bg-emerald-50">
-                        <Edit2 size={16} strokeWidth={2.5} />
-                      </button>
-                      <button onClick={() => confirmDelete(partner)} title="Delete Partner" className="text-gray-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50">
-                        <Trash2 size={16} strokeWidth={2.5} />
-                      </button>
+                      {hasPermission('partners', 'edit') && (
+                        <button onClick={() => openEditModal(partner)} title="Edit Partner" className="text-gray-400 hover:text-emerald-600 transition-colors p-1.5 rounded-lg hover:bg-emerald-50">
+                          <Edit2 size={16} strokeWidth={2.5} />
+                        </button>
+                      )}
+                      {hasPermission('partners', 'delete') && (
+                        <button onClick={() => confirmDelete(partner)} title="Delete Partner" className="text-gray-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50">
+                          <Trash2 size={16} strokeWidth={2.5} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -456,10 +464,10 @@ const PartnerManagementView = () => {
                   onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
                   className="appearance-none bg-transparent pl-2 pr-6 py-1 focus:outline-none cursor-pointer text-gray-700"
                 >
-                  <option value={5}>5 / page</option>
-                  <option value={10}>10 / page</option>
-                  <option value={25}>25 / page</option>
-                  <option value={50}>50 / page</option>
+                  <option value={5} className="text-gray-900 bg-white">5 / page</option>
+                  <option value={10} className="text-gray-900 bg-white">10 / page</option>
+                  <option value={25} className="text-gray-900 bg-white">25 / page</option>
+                  <option value={50} className="text-gray-900 bg-white">50 / page</option>
                 </select>
                 <ChevronDown size={14} className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>

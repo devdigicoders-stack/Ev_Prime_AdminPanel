@@ -44,6 +44,23 @@ const formatPermissionLabel = (key) => {
   return key.charAt(0).toUpperCase() + key.slice(1).replace(/-/g, ' ');
 };
 
+const getAvailableActions = (module) => {
+  const overrides = {
+    'dashboard': ['view'],
+    'users': ['view', 'edit', 'delete'],
+    'bookings': ['view', 'edit', 'delete'],
+    'partner-complaints': ['view', 'edit'],
+    'payments': ['view'],
+    'payouts': ['view', 'edit'],
+    'audit': ['view'],
+    'reports': ['view', 'add'],
+    'carbon': ['view'],
+    'gov': ['view'],
+    'analytics': ['view'],
+  };
+  return overrides[module] || ['view', 'add', 'edit', 'delete'];
+};
+
 const EMPTY_FORM = {
   name: '',
   email: '',
@@ -91,6 +108,17 @@ const SubAdminManagementView = () => {
 
   const openModal = (admin = null) => {
     if (admin) {
+      // Normalize legacy permissions to granular
+      let normalizedPerms = [];
+      (admin.permissions || []).forEach(p => {
+        if (!p.includes('.')) {
+          // Legacy: grant all actions
+          normalizedPerms.push(`${p}.view`, `${p}.add`, `${p}.edit`, `${p}.delete`);
+        } else {
+          normalizedPerms.push(p);
+        }
+      });
+      
       setEditingAdmin(admin);
       setFormData({
         name: admin.name,
@@ -98,7 +126,7 @@ const SubAdminManagementView = () => {
         password: '',
         role: admin.role || '',
         phone: admin.phone || '',
-        permissions: admin.permissions || [],
+        permissions: normalizedPerms,
         isActive: admin.isActive,
       });
     } else {
@@ -111,16 +139,33 @@ const SubAdminManagementView = () => {
 
   const closeModal = () => { setIsModalOpen(false); setEditingAdmin(null); };
 
-  const togglePermission = (key) => {
-    setFormData(prev => ({
-      ...prev,
-      permissions: prev.permissions.includes(key)
-        ? prev.permissions.filter(p => p !== key)
-        : [...prev.permissions, key],
-    }));
+  const togglePermissionAction = (module, action) => {
+    const permKey = `${module}.${action}`;
+    setFormData(prev => {
+      let newPermissions = [...prev.permissions];
+      
+      if (newPermissions.includes(permKey)) {
+        newPermissions = newPermissions.filter(p => p !== permKey);
+      } else {
+        newPermissions.push(permKey);
+        // Automatically grant 'view' if assigning any other action
+        if (action !== 'view' && !newPermissions.includes(`${module}.view`)) {
+          newPermissions.push(`${module}.view`);
+        }
+      }
+      return { ...prev, permissions: newPermissions };
+    });
   };
 
-  const selectAll = () => setFormData(prev => ({ ...prev, permissions: [...allPermissions] }));
+  const selectAll = () => {
+    const all = [];
+    allPermissions.forEach(module => {
+      const actions = getAvailableActions(module);
+      actions.forEach(a => all.push(`${module}.${a}`));
+    });
+    setFormData(prev => ({ ...prev, permissions: all }));
+  };
+
   const clearAll = () => setFormData(prev => ({ ...prev, permissions: [] }));
 
   const handleSubmit = async (e) => {
@@ -278,55 +323,64 @@ const SubAdminManagementView = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {filtered.map(admin => (
-                  <tr key={admin._id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm flex-shrink-0">
-                          {admin.name.charAt(0).toUpperCase()}
+                {filtered.map(admin => {
+                  // calculate unique modules from specific actions or legacy strings
+                  const uniqueModules = new Set();
+                  (admin.permissions || []).forEach(p => {
+                    const mod = p.includes('.') ? p.split('.')[0] : p;
+                    uniqueModules.add(mod);
+                  });
+
+                  return (
+                    <tr key={admin._id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm flex-shrink-0">
+                            {admin.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="font-semibold text-gray-900">{admin.name}</span>
                         </div>
-                        <span className="font-semibold text-gray-900">{admin.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">{admin.email}</td>
-                    <td className="px-6 py-4">
-                      <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg text-xs font-semibold">
-                        {admin.role || 'Sub Administrator'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="bg-orange-50 text-orange-700 px-2.5 py-1 rounded-lg text-xs font-semibold">
-                        {admin.permissions?.length || 0} modules
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <button onClick={() => handleToggleActive(admin)} className="flex items-center gap-1.5 transition-colors">
-                        {admin.isActive
-                          ? <><ToggleRight className="w-6 h-6 text-green-500" /><span className="text-green-600 font-semibold text-xs">Active</span></>
-                          : <><ToggleLeft className="w-6 h-6 text-gray-400" /><span className="text-gray-400 font-semibold text-xs">Inactive</span></>
-                        }
-                      </button>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => openModal(admin)}
-                          className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-4 h-4" />
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">{admin.email}</td>
+                      <td className="px-6 py-4">
+                        <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-lg text-xs font-semibold">
+                          {admin.role || 'Sub Administrator'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="bg-orange-50 text-orange-700 px-2.5 py-1 rounded-lg text-xs font-semibold">
+                          {uniqueModules.size} modules
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button onClick={() => handleToggleActive(admin)} className="flex items-center gap-1.5 transition-colors">
+                          {admin.isActive
+                            ? <><ToggleRight className="w-6 h-6 text-green-500" /><span className="text-green-600 font-semibold text-xs">Active</span></>
+                            : <><ToggleLeft className="w-6 h-6 text-gray-400" /><span className="text-gray-400 font-semibold text-xs">Inactive</span></>
+                          }
                         </button>
-                        <button
-                          onClick={() => handleDelete(admin._id, admin.name)}
-                          className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => openModal(admin)}
+                            className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(admin._id, admin.name)}
+                            className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -336,7 +390,7 @@ const SubAdminManagementView = () => {
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[95vh] flex flex-col" onClick={e => e.stopPropagation()}>
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 shrink-0">
               <h2 className="text-xl font-bold text-gray-800">
@@ -422,30 +476,59 @@ const SubAdminManagementView = () => {
                 </div>
               </div>
 
-              {/* Permissions */}
-              <div>
+              {/* Permissions Matrix */}
+              <div className="pt-2">
                 <div className="flex items-center justify-between mb-3">
-                  <label className="text-sm font-semibold text-gray-700">
-                    Module Permissions ({formData.permissions.length}/{allPermissions.length})
-                  </label>
-                  <div className="flex gap-2">
-                    <button type="button" onClick={selectAll} className="text-xs text-green-600 hover:underline font-semibold">Select All</button>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block">
+                      Granular Module Permissions
+                    </label>
+                    <span className="text-xs text-gray-500">Configure exact access levels for each module</span>
+                  </div>
+                  <div className="flex gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                    <button type="button" onClick={selectAll} className="text-xs text-green-600 hover:text-green-700 font-semibold transition-colors">Select All</button>
                     <span className="text-gray-300">|</span>
-                    <button type="button" onClick={clearAll} className="text-xs text-red-500 hover:underline font-semibold">Clear All</button>
+                    <button type="button" onClick={clearAll} className="text-xs text-red-500 hover:text-red-600 font-semibold transition-colors">Clear All</button>
                   </div>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-52 overflow-y-auto p-3 bg-gray-50 rounded-xl border border-gray-200">
-                  {allPermissions.map(key => (
-                    <label key={key} className="flex items-center gap-2 cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        checked={formData.permissions.includes(key)}
-                        onChange={() => togglePermission(key)}
-                        className="w-4 h-4 accent-green-600 rounded"
-                      />
-                      <span className="text-xs font-medium text-gray-700 group-hover:text-green-700 transition-colors">{formatPermissionLabel(key)}</span>
-                    </label>
-                  ))}
+                
+                <div className="overflow-x-auto max-h-[300px] border border-gray-200 rounded-xl shadow-sm">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm border-b border-gray-200">
+                      <tr>
+                        <th className="px-5 py-3 font-semibold text-gray-700 w-1/3">Module Name</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700 text-center">View</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700 text-center">Add</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700 text-center">Edit</th>
+                        <th className="px-4 py-3 font-semibold text-gray-700 text-center">Delete</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 bg-white">
+                      {allPermissions.map(module => (
+                        <tr key={module} className="hover:bg-green-50/30 transition-colors">
+                          <td className="px-5 py-2.5 font-medium text-gray-800">{formatPermissionLabel(module)}</td>
+                          {['view', 'add', 'edit', 'delete'].map(action => {
+                            const permKey = `${module}.${action}`;
+                            const isAvailable = getAvailableActions(module).includes(action);
+                            return (
+                              <td key={action} className="px-4 py-2.5 text-center">
+                                {isAvailable ? (
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.permissions.includes(permKey)}
+                                    onChange={() => togglePermissionAction(module, action)}
+                                    className="w-4 h-4 accent-green-600 rounded cursor-pointer"
+                                  />
+                                ) : (
+                                  <span className="text-gray-300">-</span>
+                                )}
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>

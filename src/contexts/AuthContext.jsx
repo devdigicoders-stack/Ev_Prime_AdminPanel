@@ -58,11 +58,14 @@ export const AuthProvider = ({ children }) => {
   // true if superadmin (or old admin without adminType field)
   const isSuperAdmin = !admin?.adminType || admin?.adminType === 'superadmin';
 
-  // check if admin has access to a module
-  const hasPermission = (module) => {
+  // check if admin has access to a module and action
+  const hasPermission = (module, action = 'view') => {
     if (!admin) return false;
     if (!admin.adminType || admin.adminType === 'superadmin') return true;
-    return Array.isArray(admin.permissions) && admin.permissions.includes(module);
+    if (!Array.isArray(admin.permissions)) return false;
+    
+    // Check for legacy full module access or specific action access
+    return admin.permissions.includes(module) || admin.permissions.includes(`${module}.${action}`);
   };
 
   return (

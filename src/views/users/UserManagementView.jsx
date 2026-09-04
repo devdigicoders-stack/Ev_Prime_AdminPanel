@@ -3,9 +3,10 @@ import {
   Search, ChevronDown, Trash2, ChevronLeft, ChevronRight, Loader2, 
   AlertCircle, X, Eye, Lock, Unlock, ShieldAlert, CheckCircle2, XCircle, 
   Wallet, RotateCcw, Zap, User, Car, FileText, Leaf, Award, 
-  ArrowUpRight, ArrowDownLeft, Calendar, Clock, DollarSign, AlertTriangle, ExternalLink, Square, Play, Gift, Star, TrendingUp, Plus
+  ArrowUpRight, ArrowDownLeft, Clock, Square, Gift, Star, TrendingUp, Plus
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../contexts/AuthContext';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
@@ -17,6 +18,7 @@ const getMediaUrl = (url) => {
 };
 
 const UserManagementView = () => {
+  const { hasPermission } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -575,32 +577,36 @@ const UserManagementView = () => {
                       </button>
 
                       {/* Block / Unblock Toggle Button */}
-                      {user.status === 'blocked' ? (
-                        <button 
-                          onClick={() => confirmBlockToggle(user)} 
-                          title="Unblock User"
-                          className="text-emerald-600 hover:text-emerald-700 p-2 rounded-lg hover:bg-emerald-50 transition-colors bg-emerald-50/50"
-                        >
-                          <Unlock size={17} strokeWidth={2} />
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={() => confirmBlockToggle(user)} 
-                          title="Block User"
-                          className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                        >
-                          <Lock size={17} strokeWidth={2} />
-                        </button>
+                      {hasPermission('users', 'edit') && (
+                        user.status === 'blocked' ? (
+                          <button 
+                            onClick={() => confirmBlockToggle(user)} 
+                            title="Unblock User"
+                            className="text-emerald-600 hover:text-emerald-700 p-2 rounded-lg hover:bg-emerald-50 transition-colors bg-emerald-50/50"
+                          >
+                            <Unlock size={17} strokeWidth={2} />
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => confirmBlockToggle(user)} 
+                            title="Block User"
+                            className="text-gray-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                          >
+                            <Lock size={17} strokeWidth={2} />
+                          </button>
+                        )
                       )}
 
                       {/* Delete Button */}
-                      <button 
-                        onClick={() => confirmDelete(user)} 
-                        title="Delete User"
-                        className="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 size={17} strokeWidth={2} />
-                      </button>
+                      {hasPermission('users', 'delete') && (
+                        <button 
+                          onClick={() => confirmDelete(user)} 
+                          title="Delete User"
+                          className="text-gray-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 size={17} strokeWidth={2} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -771,15 +777,17 @@ const UserManagementView = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => confirmBlockToggle(selectedUser)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition ${
-                      selectedUser.status === 'blocked' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40'
-                    }`}
-                  >
-                    {selectedUser.status === 'blocked' ? <Unlock size={14} /> : <Lock size={14} />}
-                    {selectedUser.status === 'blocked' ? 'Unblock' : 'Block'}
-                  </button>
+                  {hasPermission('users', 'edit') && (
+                    <button 
+                      onClick={() => confirmBlockToggle(selectedUser)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition ${
+                        selectedUser.status === 'blocked' ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40'
+                      }`}
+                    >
+                      {selectedUser.status === 'blocked' ? <Unlock size={14} /> : <Lock size={14} />}
+                      {selectedUser.status === 'blocked' ? 'Unblock' : 'Block'}
+                    </button>
+                  )}
                   <button 
                     onClick={() => setIsDrawerOpen(false)}
                     className="p-2 text-gray-400 hover:text-white rounded-xl hover:bg-white/10 transition"
@@ -932,8 +940,8 @@ const UserManagementView = () => {
                             <p className="text-[11px] text-gray-400 mt-1">This user has not completed any charging sessions yet.</p>
                           </div>
                         ) : (
-                          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                            <table className="w-full text-left border-collapse">
+                          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+                            <table className="w-full min-w-[800px] text-left border-collapse">
                               <thead className="bg-gray-50 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase">
                                 <tr>
                                   <th className="px-4 py-3">Date</th>
@@ -1157,22 +1165,24 @@ const UserManagementView = () => {
                               </div>
 
                               {/* Actions */}
-                              <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => handleUpdateKYC('verified')}
-                                  disabled={kycActionLoading || kycData?.status === 'verified'}
-                                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm"
-                                >
-                                  <CheckCircle2 size={14} /> Approve KYC
-                                </button>
-                                <button
-                                  onClick={() => setIsRejectionModalOpen(true)}
-                                  disabled={kycActionLoading || kycData?.status === 'rejected'}
-                                  className="px-3.5 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm"
-                                >
-                                  <XCircle size={14} /> Reject
-                                </button>
-                              </div>
+                              {hasPermission('users', 'edit') && (
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => handleUpdateKYC('verified')}
+                                    disabled={kycActionLoading || kycData?.status === 'verified'}
+                                    className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm"
+                                  >
+                                    <CheckCircle2 size={14} /> Approve KYC
+                                  </button>
+                                  <button
+                                    onClick={() => setIsRejectionModalOpen(true)}
+                                    disabled={kycActionLoading || kycData?.status === 'rejected'}
+                                    className="px-3.5 py-2 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm"
+                                  >
+                                    <XCircle size={14} /> Reject
+                                  </button>
+                                </div>
+                              )}
                             </div>
 
                             {/* Document Cards */}
@@ -1270,13 +1280,15 @@ const UserManagementView = () => {
                                 </div>
                               </div>
 
-                              <button
-                                onClick={() => setIsRefundModalOpen(true)}
-                                className="relative z-10 px-4 py-2.5 bg-[#8CC63F] hover:bg-[#7db534] text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg hover:shadow-xl cursor-pointer"
-                              >
-                                <RotateCcw size={15} />
-                                Initiate Refund
-                              </button>
+                              {hasPermission('users', 'edit') && (
+                                <button
+                                  onClick={() => setIsRefundModalOpen(true)}
+                                  className="relative z-10 px-4 py-2.5 bg-[#8CC63F] hover:bg-[#7db534] text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-lg hover:shadow-xl cursor-pointer"
+                                >
+                                  <RotateCcw size={15} />
+                                  Initiate Refund
+                                </button>
+                              )}
                             </div>
 
                             {/* Transactions Timeline */}

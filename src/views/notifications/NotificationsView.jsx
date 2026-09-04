@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check, CheckCircle2, AlertTriangle, Star, Send, X, Bell, Trash2, RefreshCw } from 'lucide-react';
+import { Check, CheckCircle2, AlertTriangle, Star, Send, X, Bell, Trash2, RefreshCw, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNotification } from '../../contexts/NotificationContext';
 
@@ -39,6 +39,8 @@ const NotificationsView = () => {
 
   const [showModal, setShowModal] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     body: '',
@@ -60,6 +62,7 @@ const NotificationsView = () => {
         setBroadcasts(data);
       }
     } catch (error) {
+      
       toast.error('Failed to load broadcast history');
     } finally {
       setIsLoadingBroadcasts(false);
@@ -82,13 +85,30 @@ const NotificationsView = () => {
     setIsSending(true);
     try {
       const token = localStorage.getItem('adminToken');
+      
+      let imageUrl = null;
+      if (imageFile) {
+        const formDataUpload = new FormData();
+        formDataUpload.append('image', imageFile);
+        const uploadRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/upload/image`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formDataUpload
+        });
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok) throw new Error(uploadData.message || 'Image upload failed');
+        imageUrl = uploadData.url;
+      }
+
+      const payload = { ...formData, imageUrl };
+
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/notifications/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
       const data = await response.json();
       
@@ -96,6 +116,8 @@ const NotificationsView = () => {
         toast.success(data.message || 'Notification sent successfully');
         setShowModal(false);
         setFormData({ title: '', body: '', type: 'alert', userId: '' });
+        setImageFile(null);
+        setImagePreview('');
         if (activeTab === 'sent') {
           fetchBroadcasts();
         }
@@ -103,7 +125,7 @@ const NotificationsView = () => {
         toast.error(data.message || 'Failed to send notification');
       }
     } catch (error) {
-      toast.error('An error occurred');
+      toast.error(error.message || 'Error sending notification');
     } finally {
       setIsSending(false);
     }
@@ -204,7 +226,7 @@ const NotificationsView = () => {
 
       {/* Content Area */}
       {activeTab === 'inbox' ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
           <div className="divide-y divide-gray-50">
             {notifications.length === 0 ? (
               <div className="p-8 text-center text-gray-500 font-medium">No notifications yet.</div>
@@ -249,7 +271,7 @@ const NotificationsView = () => {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex-1 overflow-y-auto no-scrollbar">
           {isLoadingBroadcasts ? (
             <div className="p-12 flex justify-center">
               <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
@@ -282,6 +304,11 @@ const NotificationsView = () => {
                       <td className="p-4 align-top max-w-xs">
                         <div className="text-sm font-semibold text-gray-900 mb-1">{b.title}</div>
                         <div className="text-sm text-gray-600 line-clamp-2" title={b.body}>{b.body}</div>
+                        {b.imageUrl && (
+                          <div className="mt-2">
+                            <img src={b.imageUrl} alt="Banner" className="h-12 object-cover rounded border border-gray-200" />
+                          </div>
+                        )}
                       </td>
                       <td className="p-4 align-top">
                         <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-semibold capitalize">
@@ -364,6 +391,48 @@ const NotificationsView = () => {
                   placeholder="Enter the notification message..."
                   required
                 ></textarea>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Banner Image (Optional)</label>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl relative group hover:border-emerald-500 transition-colors bg-gray-50 hover:bg-gray-50/50">
+                  <div className="space-y-1 text-center">
+                    {imagePreview ? (
+                      <div className="relative w-full h-32 mb-2">
+                        <img src={imagePreview} alt="Preview" className="mx-auto h-32 object-contain rounded-lg shadow-sm" />
+                        <button 
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setImageFile(null); setImagePreview(''); }}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 transition-colors"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <ImageIcon className="mx-auto h-10 w-10 text-gray-400 group-hover:text-emerald-500 transition-colors" />
+                    )}
+                    <div className="flex text-sm text-gray-600 justify-center">
+                      <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-emerald-500">
+                        <span>Upload a file</span>
+                        <input 
+                          id="file-upload" 
+                          name="file-upload" 
+                          type="file" 
+                          accept="image/*" 
+                          className="sr-only" 
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              setImageFile(e.target.files[0]);
+                              setImagePreview(URL.createObjectURL(e.target.files[0]));
+                            }
+                          }}
+                        />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">

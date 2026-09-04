@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Search, ChevronDown, Plus, Edit2, Trash2, X, Loader2, AlertCircle, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../contexts/AuthContext';
 import { GoogleMap, useJsApiLoader, Marker, Autocomplete } from '@react-google-maps/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -8,6 +9,7 @@ const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const libraries = ['places'];
 
 const StationManagementView = () => {
+  const { hasPermission } = useAuth();
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
@@ -327,15 +329,17 @@ const StationManagementView = () => {
               <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
             
-            <button 
-              onClick={() => {
-                setFormData(initialFormState);
-                setIsAddModalOpen(true);
-              }}
-              className="w-full sm:w-auto bg-[#8CC63F] hover:bg-[#116631] text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
-            >
-              <Plus size={18} strokeWidth={2.5} /> Add Station
-            </button>
+            {hasPermission('stations', 'add') && (
+              <button 
+                onClick={() => {
+                  setFormData(initialFormState);
+                  setIsAddModalOpen(true);
+                }}
+                className="w-full sm:w-auto bg-[#8CC63F] hover:bg-[#116631] text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm"
+              >
+                <Plus size={18} strokeWidth={2.5} /> Add Station
+              </button>
+            )}
           </div>
         </div>
 
@@ -395,12 +399,16 @@ const StationManagementView = () => {
                       <button onClick={() => { setStationToView(station); setIsViewModalOpen(true); }} className="text-gray-400 hover:text-blue-600 transition-colors">
                         <Eye size={16} strokeWidth={2.5} />
                       </button>
-                      <button onClick={() => openEditModal(station)} className="text-gray-400 hover:text-emerald-600 transition-colors">
-                        <Edit2 size={16} strokeWidth={2.5} />
-                      </button>
-                      <button onClick={() => confirmDelete(station)} className="text-gray-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50">
-                        <Trash2 size={16} strokeWidth={2.5} />
-                      </button>
+                      {hasPermission('stations', 'edit') && (
+                        <button onClick={() => openEditModal(station)} className="text-gray-400 hover:text-emerald-600 transition-colors">
+                          <Edit2 size={16} strokeWidth={2.5} />
+                        </button>
+                      )}
+                      {hasPermission('stations', 'delete') && (
+                        <button onClick={() => confirmDelete(station)} className="text-gray-400 hover:text-red-500 transition-colors p-1.5 rounded-lg hover:bg-red-50">
+                          <Trash2 size={16} strokeWidth={2.5} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
