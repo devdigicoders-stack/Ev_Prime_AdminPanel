@@ -77,7 +77,13 @@ const ProfileView = () => {
   };
 
   const handleEditChange = (e) => {
-    setEditForm({ ...editForm, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'phone') {
+      const numericValue = value.replace(/[^0-9+]/g, '');
+      setEditForm({ ...editForm, [name]: numericValue });
+    } else {
+      setEditForm({ ...editForm, [name]: value });
+    }
   };
 
   const handleImageChange = (e) => {
@@ -366,7 +372,7 @@ const ProfileView = () => {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold text-gray-700">Phone</label>
-                    <input name="phone" value={editForm.phone} onChange={handleEditChange} className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#8CC63F] outline-none text-sm" />
+                    <input type="tel" name="phone" value={editForm.phone} onChange={handleEditChange} maxLength="15" className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#8CC63F] outline-none text-sm" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold text-gray-700">Location</label>
