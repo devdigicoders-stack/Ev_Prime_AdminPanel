@@ -260,8 +260,13 @@ const DashboardView = () => {
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                       <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
                       <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => val === 0 ? '0' : `${val / 1000}K`} />
-                      <Tooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                      <Bar dataKey="value" fill="#16a34a" radius={[2, 2, 0, 0]} barSize={8} />
+                      <Tooltip 
+                        cursor={{ fill: 'rgba(140,198,63,0.08)' }} 
+                        contentStyle={{ borderRadius: '10px', border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.12)', fontSize: '12px' }}
+                        formatter={(value) => [`${Number(value).toFixed(2)} kWh`, 'Energy']}
+                        labelFormatter={(label) => `Date: ${label}`}
+                      />
+                      <Bar dataKey="value" name="Energy (kWh)" fill="#16a34a" radius={[2, 2, 0, 0]} barSize={8} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
