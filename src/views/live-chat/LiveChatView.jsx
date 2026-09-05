@@ -221,14 +221,14 @@ const LiveChatView = () => {
                 return (
                   <div key={msg._id} className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
                     <div 
-                      className={`max-w-[70%] rounded-2xl px-4 py-2 shadow-sm relative ${
+                      className={`max-w-[70%] min-w-[90px] rounded-2xl px-4 py-2 shadow-sm flex flex-col ${
                         isAdmin 
                           ? 'bg-[#dcf8c6] text-gray-800 rounded-tr-none' 
                           : 'bg-white text-gray-800 rounded-tl-none'
                       }`}
                     >
-                      <p className="text-sm pb-3">{msg.text}</p>
-                      <div className="absolute bottom-1 right-2 flex items-center gap-1">
+                      <p className="text-sm break-words">{msg.text}</p>
+                      <div className="flex justify-end items-center gap-1 mt-1">
                         <span className="text-[10px] text-gray-500">
                           {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
