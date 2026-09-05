@@ -8,6 +8,7 @@ const LoginView = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const navigate = useNavigate();
@@ -19,6 +20,13 @@ const LoginView = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    if (!rememberMe) {
+      setErrorMsg('Please check "Remember me" to continue.');
+      toast.error('Please check "Remember me" to continue.');
+      return;
+    }
+
     setLoading(true);
     setErrorMsg('');
 
@@ -130,6 +138,8 @@ const LoginView = () => {
               <label className="flex items-center text-gray-600 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="mr-1.5 md:mr-2 w-3.5 h-3.5 md:w-4 md:h-4 rounded border-gray-300 text-[#8CC63F] focus:ring-[#8CC63F]"
                 />
                 <span className="font-medium">Remember me</span>
