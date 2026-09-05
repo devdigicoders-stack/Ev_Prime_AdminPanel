@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Mail, Phone, MapPin, Building, Calendar, Edit, Shield, Activity, Clock, CheckCircle2, Loader2, X, Camera, Lock } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Mail, Phone, MapPin, Building, Calendar, Edit, Shield, Activity, Clock, Loader2, X, Camera, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 

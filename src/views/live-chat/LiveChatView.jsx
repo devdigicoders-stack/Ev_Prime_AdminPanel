@@ -16,9 +16,9 @@ const LiveChatView = () => {
   const messagesEndRef = useRef(null);
   
   // Admin is using the panel, so we need some admin ID.
-  // In a real app, you get this from auth context. Using a fixed ID for now or from localStorage.
-  const adminData = JSON.parse(localStorage.getItem('adminData') || '{}');
-  const adminId = adminData._id || 'admin-123'; 
+  // Since all admins and subadmins act as the same 'Support Team' for partners, 
+  // we use the universal admin ID that the partner app sends messages to.
+  const adminId = 'admin-123';  
 
   useEffect(() => {
     fetchPartners();
