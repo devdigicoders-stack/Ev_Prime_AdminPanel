@@ -159,9 +159,9 @@ const LiveChatView = () => {
   return (
     <div className="h-[calc(100vh-80px)] flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden m-4">
       {/* Sidebar - Partners List */}
-      <div className="w-1/3 border-r border-gray-100 flex flex-col bg-gray-50/50">
+      <div className="w-1/3 border-r border-gray-100 flex flex-col bg-gray-50">
         <div className="p-4 border-b border-gray-100 bg-white">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Live Chat</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Live Chat</h2>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input 
@@ -169,24 +169,26 @@ const LiveChatView = () => {
               placeholder="Search partners..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-[#8CC63F] text-sm transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-100 border-none rounded-xl focus:ring-2 focus:ring-[#8CC63F] text-sm transition-all text-gray-800 outline-none"
             />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {filteredPartners.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">No active chats found.</div>
+            <div className="p-8 text-center text-gray-500 text-sm">No active chats found.</div>
           ) : (
             filteredPartners.map(partner => (
               <div 
                 key={partner._id}
                 onClick={() => setSelectedPartner(partner)}
                 className={`p-4 border-b border-gray-100 cursor-pointer transition-colors flex items-center gap-3 ${
-                  selectedPartner?._id === partner._id ? 'bg-[#8CC63F]/10 border-l-4 border-l-[#8CC63F]' : 'hover:bg-gray-100'
+                  selectedPartner?._id === partner._id
+                    ? 'bg-[#8CC63F]/10 border-l-4 border-l-[#8CC63F]'
+                    : 'hover:bg-gray-100'
                 }`}
               >
-                <div className="w-12 h-12 rounded-full bg-[#8CC63F] text-white flex items-center justify-center font-bold text-lg">
+                <div className="w-12 h-12 rounded-full bg-[#8CC63F] text-white flex items-center justify-center font-bold text-lg flex-shrink-0">
                   {partner.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 overflow-hidden">
@@ -200,11 +202,11 @@ const LiveChatView = () => {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col bg-[#E5DDD5]">
+      <div className="flex-1 flex flex-col bg-gray-50">
         {selectedPartner ? (
           <>
             {/* Chat Header */}
-            <div className="h-16 px-6 bg-white border-b border-gray-200 flex items-center gap-4 shadow-sm z-10">
+            <div className="h-16 px-6 bg-white border-b border-gray-100 flex items-center gap-4 shadow-sm z-10">
               <div className="w-10 h-10 rounded-full bg-[#8CC63F] text-white flex items-center justify-center font-bold">
                 {selectedPartner.name.charAt(0).toUpperCase()}
               </div>
@@ -214,8 +216,8 @@ const LiveChatView = () => {
               </div>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-3">
               {messages.map((msg) => {
                 const isAdmin = msg.senderModel === 'User';
                 return (
@@ -223,20 +225,20 @@ const LiveChatView = () => {
                     <div 
                       className={`max-w-[70%] min-w-[90px] rounded-2xl px-4 py-2 shadow-sm flex flex-col ${
                         isAdmin 
-                          ? 'bg-[#dcf8c6] text-gray-800 rounded-tr-none' 
-                          : 'bg-white text-gray-800 rounded-tl-none'
+                          ? 'bg-[#8CC63F] text-white rounded-tr-none' 
+                          : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'
                       }`}
                     >
-                      <p className="text-sm break-words">{msg.text}</p>
+                      <p className="text-sm break-words leading-relaxed">{msg.text}</p>
                       <div className="flex justify-end items-center gap-1 mt-1">
-                        <span className="text-[10px] text-gray-500">
+                        <span className={`text-[10px] ${isAdmin ? 'text-white/70' : 'text-gray-400'}`}>
                           {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         {isAdmin && (
-                          <span className="ml-1">
-                            {msg.status === 'sent' && <Check size={12} className="text-gray-400" />}
-                            {msg.status === 'delivered' && <CheckCheck size={12} className="text-gray-400" />}
-                            {msg.status === 'read' && <CheckCheck size={12} className="text-blue-500" />}
+                          <span className="ml-0.5">
+                            {msg.status === 'sent' && <Check size={12} className="text-white/70" />}
+                            {msg.status === 'delivered' && <CheckCheck size={12} className="text-white/70" />}
+                            {msg.status === 'read' && <CheckCheck size={12} className="text-white" />}
                           </span>
                         )}
                       </div>
@@ -248,29 +250,32 @@ const LiveChatView = () => {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-white border-t border-gray-200">
-              <form onSubmit={sendMessage} className="flex gap-2">
+            <div className="p-4 bg-white border-t border-gray-100">
+              <form onSubmit={sendMessage} className="flex gap-3 items-center">
                 <input
                   type="text"
                   value={inputText}
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder="Type a message..."
-                  className="flex-1 bg-gray-100 border-none rounded-full px-6 py-3 focus:ring-2 focus:ring-[#8CC63F] transition-all text-sm"
+                  className="flex-1 bg-gray-100 border-none rounded-full px-6 py-3 focus:ring-2 focus:ring-[#8CC63F] outline-none transition-all text-sm text-gray-900"
                 />
                 <button 
                   type="submit"
                   disabled={!inputText.trim()}
-                  className="w-12 h-12 bg-[#8CC63F] text-white rounded-full flex items-center justify-center hover:bg-[#7ab133] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+                  className="w-11 h-11 bg-[#8CC63F] text-white rounded-full flex items-center justify-center hover:bg-[#7ab133] transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-md flex-shrink-0"
                 >
-                  <Send size={18} className="ml-1" />
+                  <Send size={17} className="ml-0.5" />
                 </button>
               </form>
             </div>
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
-            <MessageSquare size={64} className="text-gray-300 mb-4" />
-            <p className="text-lg font-medium">Select a partner to start chatting</p>
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
+            <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+              <MessageSquare size={36} className="text-gray-300" />
+            </div>
+            <p className="text-base font-semibold text-gray-500">Select a partner to start chatting</p>
+            <p className="text-sm text-gray-400 mt-1">Messages will appear here</p>
           </div>
         )}
       </div>
