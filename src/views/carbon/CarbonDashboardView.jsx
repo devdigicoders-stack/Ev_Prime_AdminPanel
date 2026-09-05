@@ -32,31 +32,50 @@ const CarbonDashboardView = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [timeRange, setTimeRange] = useState('30d');
+  const [timeRange, setTimeRange] = useState('all');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd]   = useState('');
+  const [showCustom, setShowCustom] = useState(false);
+
+  const fetchCarbonData = async (range, from, to) => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      let url = `${API_BASE_URL}/carbon?range=${range}`;
+      if (range === 'custom' && from && to) url += `&from=${from}&to=${to}`;
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to fetch carbon data');
+      const result = await response.json();
+      setData(result);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCarbonData = async () => {
-      setLoading(true);
-      try {
-        const token = localStorage.getItem('adminToken');
-        const response = await fetch(`${API_BASE_URL}/carbon?range=${timeRange}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) throw new Error('Failed to fetch carbon data');
-        
-        const result = await response.json();
-        setData(result);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCarbonData();
+    if (timeRange !== 'custom') fetchCarbonData(timeRange);
   }, [timeRange]);
+
+  const handleRangeChange = (e) => {
+    const val = e.target.value;
+    setTimeRange(val);
+    if (val === 'custom') {
+      setShowCustom(true);
+    } else {
+      setShowCustom(false);
+    }
+  };
+
+  const handleApplyCustom = () => {
+    if (!customStart || !customEnd) return;
+    if (new Date(customStart) > new Date(customEnd)) return alert('Start date must be before end date');
+    fetchCarbonData('custom', customStart, customEnd);
+    setShowCustom(false);
+  };
 
   const handleExport = () => {
     if (!data || !data.trendData) return;
@@ -107,20 +126,55 @@ const CarbonDashboardView = () => {
           <p className="text-gray-500 text-sm font-medium">Track and monitor carbon impact</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
             <select 
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
+              onChange={handleRangeChange}
               className="appearance-none bg-white border border-gray-200 rounded-lg pl-4 pr-10 py-2.5 text-sm text-gray-600 font-medium shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#8CC63F] cursor-pointer transition"
             >
               <option value="7d">Last 7 Days</option>
               <option value="30d">Last 30 Days</option>
               <option value="90d">Last 3 Months</option>
               <option value="all">All Time</option>
+              <option value="custom">Custom Range</option>
             </select>
             <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
+
+          {/* Custom Date Picker — appears when Custom Range selected */}
+          {(timeRange === 'custom' || showCustom) && (
+            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 shadow-sm">
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs text-gray-500 font-medium whitespace-nowrap">From</label>
+                <input
+                  type="date"
+                  value={customStart}
+                  max={customEnd || undefined}
+                  onChange={(e) => setCustomStart(e.target.value)}
+                  className="border border-gray-200 rounded-md px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8CC63F] cursor-pointer"
+                />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs text-gray-500 font-medium whitespace-nowrap">To</label>
+                <input
+                  type="date"
+                  value={customEnd}
+                  min={customStart || undefined}
+                  max={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setCustomEnd(e.target.value)}
+                  className="border border-gray-200 rounded-md px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#8CC63F] cursor-pointer"
+                />
+              </div>
+              <button
+                onClick={handleApplyCustom}
+                disabled={!customStart || !customEnd}
+                className="bg-[#8CC63F] hover:bg-[#7ab535] disabled:opacity-40 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition"
+              >
+                Apply
+              </button>
+            </div>
+          )}
           
           <button 
             onClick={handleExport}
@@ -146,9 +200,6 @@ const CarbonDashboardView = () => {
         <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6 flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-gray-900">CO₂ Saved Trend</h3>
-            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-600 font-medium">
-              Dynamic Projection
-            </div>
           </div>
           
           <div className="h-[280px] w-full flex-grow">
@@ -162,16 +213,25 @@ const CarbonDashboardView = () => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                 <XAxis 
-                  dataKey="name" 
+                  dataKey="date"
                   axisLine={false} 
                   tickLine={false} 
                   tick={{ fontSize: 10, fill: '#9ca3af' }} 
-                  dy={10} 
-                  interval="preserveStartEnd"
-                  minTickGap={20}
+                  dy={10}
+                  interval={Math.floor((trendData?.length || 30) / 6)}
+                  minTickGap={30}
                 />
-                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => val === 0 ? '0' : `${val / 1000}K`} />
-                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fill: '#9ca3af' }}
+                  tickFormatter={(val) => val === 0 ? '0' : val >= 1000 ? `${(val/1000).toFixed(1)}K` : `${val}`}
+                />
+                <Tooltip
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  formatter={(value) => [`${value} kg`, 'CO₂ Saved']}
+                  labelFormatter={(label) => label}
+                />
                 <Area type="monotone" dataKey="value" stroke="#8CC63F" strokeWidth={2.5} fillOpacity={1} fill="url(#colorValue)" dot={{ r: 4, fill: '#8CC63F', strokeWidth: 0 }} activeDot={{ r: 6, fill: '#8CC63F', stroke: '#fff', strokeWidth: 2 }} />
               </AreaChart>
             </ResponsiveContainer>

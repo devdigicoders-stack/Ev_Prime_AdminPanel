@@ -56,10 +56,18 @@ const StatCard = ({ title, value, growth, icon: Icon }) => (
   </div>
 );
 
+const REVENUE_PERIODS = ['Last 7 Days', 'Last 14 Days', 'Last 30 Days', 'Last 90 Days'];
+const ENERGY_PERIODS  = ['Last 7 Days', 'Last 14 Days', 'Last 30 Days', 'Last 90 Days'];
+
 const DashboardView = () => {
   const { admin, hasPermission } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [revenuePeriod, setRevenuePeriod]     = useState('Last 14 Days');
+  const [energyPeriod,  setEnergyPeriod]      = useState('Last 30 Days');
+  const [revenueOpen,   setRevenueOpen]        = useState(false);
+  const [energyOpen,    setEnergyOpen]         = useState(false);
+  const [chartLoading,  setChartLoading]       = useState({ revenue: false, energy: false });
 
   useEffect(() => {
     fetchDashboardData();
@@ -80,6 +88,47 @@ const DashboardView = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const periodToDays = (label) => {
+    const map = { 'Last 7 Days': 7, 'Last 14 Days': 14, 'Last 30 Days': 30, 'Last 90 Days': 90 };
+    return map[label] || 14;
+  };
+
+  const handleRevenuePeriod = async (period) => {
+    setRevenuePeriod(period);
+    setRevenueOpen(false);
+    setChartLoading(p => ({ ...p, revenue: true }));
+    try {
+      const token = localStorage.getItem('adminToken');
+      const days = periodToDays(period);
+      const res = await fetch(`${API_BASE_URL}/dashboard?revenueDays=${days}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const result = await res.json();
+        setData(prev => ({ ...prev, charts: { ...prev.charts, revenueData: result.charts?.revenueData ?? prev.charts.revenueData } }));
+      }
+    } catch (e) { console.error(e); }
+    finally { setChartLoading(p => ({ ...p, revenue: false })); }
+  };
+
+  const handleEnergyPeriod = async (period) => {
+    setEnergyPeriod(period);
+    setEnergyOpen(false);
+    setChartLoading(p => ({ ...p, energy: true }));
+    try {
+      const token = localStorage.getItem('adminToken');
+      const days = periodToDays(period);
+      const res = await fetch(`${API_BASE_URL}/dashboard?energyDays=${days}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const result = await res.json();
+        setData(prev => ({ ...prev, charts: { ...prev.charts, energyData: result.charts?.energyData ?? prev.charts.energyData } }));
+      }
+    } catch (e) { console.error(e); }
+    finally { setChartLoading(p => ({ ...p, energy: false })); }
   };
 
   if (loading || !data) {
@@ -111,11 +160,7 @@ const DashboardView = () => {
           <p className="text-gray-400 text-xs sm:text-sm mt-0.5">Here's what's happening today.</p>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 w-full md:w-auto pb-1 md:pb-0">
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 sm:px-4 sm:py-2 text-xs sm:text-sm text-gray-600 font-medium shadow-sm cursor-pointer hover:bg-gray-50 transition whitespace-nowrap">
-            {today} <ChevronDown size={14} className="text-gray-400 sm:w-4 sm:h-4" />
-          </div>
-        </div>
+
       </div>
 
       {/* --- STATS GRID --- */}
@@ -140,21 +185,42 @@ const DashboardView = () => {
             <div className={`${canSeeBookings ? 'lg:col-span-2' : 'lg:col-span-3'} bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6`}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">Revenue Overview</h3>
-                <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 text-xs text-gray-600 font-medium cursor-pointer">
-                  Last 14 Days <ChevronDown size={14} className="text-gray-400" />
+                <div className="relative">
+                  <button
+                    onClick={() => { setRevenueOpen(o => !o); setEnergyOpen(false); }}
+                    className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 text-xs text-gray-600 font-medium cursor-pointer hover:bg-gray-100 transition"
+                  >
+                    {chartLoading.revenue ? <Loader2 size={12} className="animate-spin mr-1" /> : null}
+                    {revenuePeriod} <ChevronDown size={14} className={`text-gray-400 transition-transform ${revenueOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {revenueOpen && (
+                    <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden min-w-[130px]">
+                      {REVENUE_PERIODS.map(p => (
+                        <button
+                          key={p}
+                          onClick={() => handleRevenuePeriod(p)}
+                          className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-gray-50 transition ${revenuePeriod === p ? 'text-[#8CC63F] bg-green-50' : 'text-gray-700'}`}
+                        >{p}</button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               
               <div className="h-[250px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={charts.revenueData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => val === 0 ? '0' : `${val / 1000}K`} />
-                    <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} formatter={(value) => [`₹${value.toLocaleString()}`, 'Revenue']} />
-                    <Line type="monotone" dataKey="value" stroke="#8CC63F" strokeWidth={2.5} dot={{ r: 4, fill: '#8CC63F', strokeWidth: 0 }} activeDot={{ r: 6, fill: '#8CC63F', stroke: '#fff', strokeWidth: 2 }} />
-                  </LineChart>
-                </ResponsiveContainer>
+                {chartLoading.revenue ? (
+                  <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-[#8CC63F]" size={28} /></div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={charts.revenueData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => val === 0 ? '0' : `${val / 1000}K`} />
+                      <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} formatter={(value) => [`₹${value.toLocaleString()}`, 'Revenue']} />
+                      <Line type="monotone" dataKey="value" stroke="#8CC63F" strokeWidth={2.5} dot={{ r: 4, fill: '#8CC63F', strokeWidth: 0 }} activeDot={{ r: 6, fill: '#8CC63F', stroke: '#fff', strokeWidth: 2 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
           )}
@@ -164,20 +230,41 @@ const DashboardView = () => {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6 flex flex-col">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">Energy Consumption (kWh)</h3>
-                <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 text-xs text-gray-600 font-medium cursor-pointer">
-                  Last 30 Days <ChevronDown size={14} className="text-gray-400" />
+                <div className="relative">
+                  <button
+                    onClick={() => { setEnergyOpen(o => !o); setRevenueOpen(false); }}
+                    className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 text-xs text-gray-600 font-medium cursor-pointer hover:bg-gray-100 transition"
+                  >
+                    {chartLoading.energy ? <Loader2 size={12} className="animate-spin mr-1" /> : null}
+                    {energyPeriod} <ChevronDown size={14} className={`text-gray-400 transition-transform ${energyOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {energyOpen && (
+                    <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 overflow-hidden min-w-[130px]">
+                      {ENERGY_PERIODS.map(p => (
+                        <button
+                          key={p}
+                          onClick={() => handleEnergyPeriod(p)}
+                          className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-gray-50 transition ${energyPeriod === p ? 'text-[#8CC63F] bg-green-50' : 'text-gray-700'}`}
+                        >{p}</button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="h-[250px] w-full flex-grow">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={charts.energyData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => val === 0 ? '0' : `${val / 1000}K`} />
-                    <Tooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                    <Bar dataKey="value" fill="#16a34a" radius={[2, 2, 0, 0]} barSize={8} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {chartLoading.energy ? (
+                  <div className="h-full flex items-center justify-center"><Loader2 className="animate-spin text-green-600" size={28} /></div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={charts.energyData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} dy={10} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(val) => val === 0 ? '0' : `${val / 1000}K`} />
+                      <Tooltip cursor={{ fill: '#f3f4f6' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                      <Bar dataKey="value" fill="#16a34a" radius={[2, 2, 0, 0]} barSize={8} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
           )}
@@ -206,8 +293,8 @@ const DashboardView = () => {
               style={{ height: '100%', width: '100%', zIndex: 0 }}
             >
               <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
               {stats.mapData && stats.mapData.map((station) => {
                 if (!station.latitude || !station.longitude) return null;
@@ -350,7 +437,7 @@ const DashboardView = () => {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6 flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Recent Activities</h3>
-            <span className="text-xs text-gray-400 font-medium cursor-pointer hover:text-gray-600">View All</span>
+            {/* <span className="text-xs text-gray-400 font-medium cursor-pointer hover:text-gray-600">View All</span> */}
           </div>
           
           <div className="space-y-6 flex-grow flex flex-col pt-2">

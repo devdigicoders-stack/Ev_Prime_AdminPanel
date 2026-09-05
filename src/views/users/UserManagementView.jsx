@@ -163,7 +163,7 @@ const UserManagementView = () => {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-[#8CC63F]': 'application/json'
+          'Content-Type': 'application/json'
         }
       });
 

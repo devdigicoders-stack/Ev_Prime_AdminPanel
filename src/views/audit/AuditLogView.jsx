@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronDown, Download, ChevronLeft, ChevronRight, Clock, Loader2, AlertCircle } from 'lucide-react';
+import { Search, ChevronDown, Download, ChevronLeft, ChevronRight, Clock, Loader2, AlertCircle, X } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -66,10 +66,10 @@ const AuditLogView = () => {
   const handleExport = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      let url = `${API_BASE_URL}/audit?page=1&limit=10000`; // fetch all matching for export
-      if (moduleFilter !== 'All Modules') url += `&module=${moduleFilter}`;
-      if (dateFilter !== 'All Time') url += `&dateFilter=${dateFilter}`;
-      if (debouncedSearch) url += `&search=${debouncedSearch}`;
+      let url = `${API_BASE_URL}/audit?page=1&limit=10000`;
+      if (moduleFilter !== 'All Modules') url += `&module=${encodeURIComponent(moduleFilter)}`;
+      if (dateFilter !== 'All Time') url += `&dateFilter=${encodeURIComponent(dateFilter)}`;
+      if (searchQuery.trim()) url += `&search=${encodeURIComponent(searchQuery.trim())}`;
 
       const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
       if (!response.ok) throw new Error('Failed to fetch data for export');
@@ -131,15 +131,18 @@ const AuditLogView = () => {
               <select 
                 value={moduleFilter}
                 onChange={e => {setModuleFilter(e.target.value); setPage(1);}}
-                className="w-full appearance-none bg-white border border-gray-200 rounded-xl pl-4 pr-10 py-2.5 text-sm text-gray-600 font-medium cursor-pointer shadow-sm hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-[#8CC63F]"
+                className={`w-full appearance-none bg-white border rounded-xl pl-4 pr-10 py-2.5 text-sm font-semibold cursor-pointer shadow-sm hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-[#8CC63F] ${
+                  moduleFilter !== 'All Modules' ? 'border-[#8CC63F] text-gray-900 ring-1 ring-[#8CC63F]/30' : 'border-gray-200 text-gray-600'
+                }`}
               >
                 <option value="All Modules">All Modules</option>
                 <option value="Authentication">Authentication</option>
+                <option value="Partner Management">Partner Management</option>
                 <option value="Station Management">Station Management</option>
                 <option value="User Management">User Management</option>
-                <option value="Ticket Management">Ticket Management</option>
                 <option value="Refund Management">Refund Management</option>
-                <option value="Partner Management">Partner Management</option>
+                <option value="Ticket Management">Ticket Management</option>
+                <option value="Security">Security</option>
               </select>
               <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
@@ -148,29 +151,61 @@ const AuditLogView = () => {
               <select 
                 value={dateFilter}
                 onChange={e => {setDateFilter(e.target.value); setPage(1);}}
-                className="w-full appearance-none bg-white border border-gray-200 rounded-xl pl-4 pr-10 py-2.5 text-sm text-gray-600 font-medium cursor-pointer shadow-sm hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-[#8CC63F]"
+                className={`w-full appearance-none bg-white border rounded-xl pl-4 pr-10 py-2.5 text-sm font-semibold cursor-pointer shadow-sm hover:bg-gray-50 transition focus:outline-none focus:ring-2 focus:ring-[#8CC63F] ${
+                  dateFilter !== 'All Time' ? 'border-[#8CC63F] text-gray-900 ring-1 ring-[#8CC63F]/30' : 'border-gray-200 text-gray-600'
+                }`}
               >
                 <option value="All Time">All Time</option>
                 <option value="Today">Today</option>
-                <option value="This Week">This Week</option>
+                <option value="Yesterday">Yesterday</option>
+                <option value="This Week">This Week (7 Days)</option>
                 <option value="This Month">This Month</option>
+                <option value="Last 30 Days">Last 30 Days</option>
               </select>
               <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             </div>
           </div>
 
-          <div className="relative w-full sm:w-48">
+          <div className="relative w-full sm:w-56">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input 
               type="text" 
               value={searchQuery}
               onChange={e => {setSearchQuery(e.target.value); setPage(1);}}
-              placeholder="Search logs..." 
-              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm"
+              placeholder="Search by User, IP, Action..." 
+              className={`w-full pl-9 pr-8 py-2.5 rounded-xl border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm ${
+                searchQuery ? 'border-[#8CC63F] ring-1 ring-[#8CC63F]/20' : 'border-gray-200'
+              }`}
             />
+            {searchQuery && (
+              <button 
+                type="button" 
+                onClick={() => { setSearchQuery(''); setPage(1); }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 rounded cursor-pointer transition-colors"
+                title="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
 
-          <button onClick={handleExport} className="w-full sm:w-auto bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm">
+          {(moduleFilter !== 'All Modules' || dateFilter !== 'All Time' || searchQuery) && (
+            <button
+              type="button"
+              onClick={() => {
+                setModuleFilter('All Modules');
+                setDateFilter('All Time');
+                setSearchQuery('');
+                setPage(1);
+              }}
+              className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-2.5 rounded-xl transition flex items-center gap-1 shadow-sm cursor-pointer"
+              title="Reset all filters"
+            >
+              <X size={13} /> Reset
+            </button>
+          )}
+
+          <button onClick={handleExport} className="w-full sm:w-auto bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors shadow-sm cursor-pointer">
             <Download size={16} /> Export
           </button>
         </div>
@@ -238,7 +273,9 @@ const AuditLogView = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm font-medium text-gray-500 whitespace-nowrap">{log.ip}</span>
+                      <span className="font-mono text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200/80 px-2 py-1 rounded-md whitespace-nowrap inline-block">
+                        {log.ip || '127.0.0.1'}
+                      </span>
                     </td>
                   </tr>
                 ))

@@ -975,10 +975,10 @@ const ChargingSolutionsTab = () => {
 
 // ─── Main CMSView with Tabs ───────────────────────────────────────────────────
 const CMSView = () => {
-  const [activeTab, setActiveTab] = useState('banners');
+  const [activeTab, setActiveTab] = useState('legal');
 
   const tabs = [
-    { id: 'banners', label: 'Banner Management', icon: ImageIcon },
+    // { id: 'banners', label: 'Banner Management', icon: ImageIcon }, // Hidden for now
     { id: 'legal', label: 'Legal Documents', icon: FileText },
     { id: 'faq', label: 'FAQ Management', icon: HelpCircle },
     { id: 'solutions', label: 'Charging Solutions', icon: Zap },
@@ -989,7 +989,7 @@ const CMSView = () => {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Content Management</h1>
-        <p className="text-gray-500 text-sm font-medium">Manage banners, privacy policy, terms of service and FAQs</p>
+        <p className="text-gray-500 text-sm font-medium">Manage privacy policy, terms of service, FAQs and charging solutions</p>
       </div>
 
       {/* Tab Switcher */}
@@ -1011,7 +1011,7 @@ const CMSView = () => {
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'banners' && <BannerTab />}
+      {/* {activeTab === 'banners' && <BannerTab />} */}
       {activeTab === 'legal' && <LegalTab />}
       {activeTab === 'faq' && <FAQTab />}
       {activeTab === 'solutions' && <ChargingSolutionsTab />}

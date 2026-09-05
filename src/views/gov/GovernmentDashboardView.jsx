@@ -50,33 +50,39 @@ const GovernmentDashboardView = () => {
     googleMapsApiKey: GOOGLE_MAPS_API_KEY
   });
 
-  const [data, setData] = useState(null);
+  const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError]     = useState(null);
   const [activeMarker, setActiveMarker] = useState(null);
+  const [period, setPeriod]   = useState('month');
+  const [periodLoading, setPeriodLoading] = useState(false);
+
+  const fetchGovData = async (p = 'month', isInitial = false) => {
+    if (isInitial) setLoading(true); else setPeriodLoading(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE_URL}/gov?period=${p}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to fetch government dashboard data');
+      const result = await response.json();
+      setData(result);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      if (isInitial) setLoading(false); else setPeriodLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchGovData = async () => {
-      try {
-        const token = localStorage.getItem('adminToken');
-        const response = await fetch(`${API_BASE_URL}/gov`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        if (!response.ok) throw new Error('Failed to fetch government dashboard data');
-        
-        const result = await response.json();
-        setData(result);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGovData();
+    fetchGovData('month', true);
   }, []);
+
+  const handlePeriodChange = (e) => {
+    const val = e.target.value;
+    setPeriod(val);
+    fetchGovData(val);
+  };
 
   if (loading) {
     return (
@@ -109,10 +115,10 @@ const GovernmentDashboardView = () => {
 
       {/* Top Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
-        <StatCard title="Total Stations" value={stats.totalStations} growth="+12.5%" icon="+" isTextIcon={true} />
-        <StatCard title="Active States" value={stats.activeStates} subValue="/ 28" growth="Active Cov" icon={MapIcon} />
-        <StatCard title="Total Revenue" value={stats.totalRevenue} growth="+18.6%" icon="₹" isTextIcon={true} />
-        <StatCard title="Gov Revenue (5% GST)" value={stats.govRevenue} growth="+18.6%" icon="₹" isTextIcon={true} />
+        <StatCard title="Total Stations"      value={stats.totalStations.toLocaleString()} growth="+12.5%" icon="+" isTextIcon={true} />
+        <StatCard title="Active States"       value={stats.activeStates} subValue="/ 28" growth="Active Cov" icon={MapIcon} />
+        <StatCard title="Total Revenue"       value={`₹${Number(stats.totalRevenue).toLocaleString()}`} growth="+18.6%" icon="₹" isTextIcon={true} />
+        <StatCard title="Gov Revenue (5% GST)" value={`₹${Number(stats.govRevenue).toLocaleString()}`} growth="+18.6%" icon="₹" isTextIcon={true} />
       </div>
 
       {/* Middle Row */}
@@ -204,8 +210,20 @@ const GovernmentDashboardView = () => {
                 <ArrowUpRight size={16} strokeWidth={3} className="mr-1" /> Estimated Target
               </div>
             </div>
-            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-600 font-medium cursor-pointer">
-              This Month <ChevronDown size={14} className="text-gray-400" />
+            <div className="relative">
+              <select
+                value={period}
+                onChange={handlePeriodChange}
+                className="appearance-none bg-gray-50 border border-gray-200 rounded-lg pl-3 pr-8 py-1.5 text-xs text-gray-600 font-medium cursor-pointer hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#8CC63F] transition"
+              >
+                <option value="month">This Month</option>
+                <option value="quarter">Last 3 Months</option>
+                <option value="year">This Year</option>
+              </select>
+              {periodLoading
+                ? <Loader2 size={12} className="absolute right-2 top-1/2 -translate-y-1/2 animate-spin text-[#8CC63F]" />
+                : <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              }
             </div>
           </div>
           
@@ -275,9 +293,9 @@ const GovernmentDashboardView = () => {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-5 md:p-6 flex flex-col">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-gray-900">Recent Government Notifications</h3>
-            <button className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
+            {/* <button className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
               View All
-            </button>
+            </button> */}
           </div>
           
           <div className="space-y-5 flex-grow">

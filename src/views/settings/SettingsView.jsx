@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { User, Bell, Palette, CreditCard, Link as LinkIcon, Upload, CheckCircle2, ChevronRight, Globe, Clock, DollarSign, Loader2, Share2, Phone, Mail, MapPin, MessageSquare } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { User, Palette, CreditCard, Upload, CheckCircle2, ChevronRight, Loader2, Share2, Phone, Mail, MapPin, MessageSquare, X, Check, Printer, Download, Sparkles, FileText, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -53,6 +53,19 @@ const SettingsView = () => {
 
   // Billing State
   const [billing, setBilling] = useState(null);
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [updatingBilling, setUpdatingBilling] = useState(false);
+  const [selectedPlanName, setSelectedPlanName] = useState('Enterprise EV');
+  const [paymentForm, setPaymentForm] = useState({
+    cardType: 'VISA',
+    cardNumber: '•••• •••• •••• 4242',
+    cardHolder: 'Bharat EV Prime Admin',
+    expiry: '12/26',
+    cvv: '888'
+  });
 
   useEffect(() => {
     fetchData();
@@ -189,13 +202,485 @@ const SettingsView = () => {
     }
   };
 
+  const AVAILABLE_PLANS = [
+    {
+      id: 'starter',
+      name: 'Starter EV',
+      price: 15000,
+      description: 'Ideal for local charging hubs & small commercial EV operations.',
+      badge: 'Starter Tier',
+      stations: 'Up to 10 Stations',
+      features: [
+        'Up to 10 Active Charging Stations',
+        'Standard OCPI / OCPP 1.6 Protocol Support',
+        'Real-time Charger Status & Diagnostics',
+        'Email Support with 24h turnaround SLA',
+        'Daily Automated Cloud Backups'
+      ]
+    },
+    {
+      id: 'growth',
+      name: 'Growth EV',
+      price: 28000,
+      description: 'Designed for rapidly expanding regional & highway charging hubs.',
+      badge: 'Fast Scaling',
+      stations: 'Up to 30 Stations',
+      features: [
+        'Up to 30 Active Charging Stations',
+        'Smart Dynamic Load Balancing & Peak Shaving',
+        'OCPP 2.0.1 Fast-Charging Protocol Integration',
+        'Priority 24/7 Phone & Email Engineering Support',
+        'Live Heatmap & Revenue Breakdown'
+      ]
+    },
+    {
+      id: 'enterprise',
+      name: 'Enterprise EV',
+      price: 45000,
+      description: 'Full capabilities with unrestricted enterprise scale and 99.99% SLA.',
+      badge: 'Most Popular',
+      stations: 'Unlimited Stations',
+      features: [
+        'Unlimited Charging Stations & Connectors',
+        'AI Predictive Maintenance & Telemetry Insights',
+        'Custom Webhooks & Platform REST API Access',
+        '99.99% Guaranteed Cloud Infrastructure SLA',
+        'Dedicated Enterprise Technical Account Manager'
+      ]
+    }
+  ];
+
+  const handleOpenPlanModal = () => {
+    setSelectedPlanName(billing?.planName || 'Enterprise EV');
+    setShowPlanModal(true);
+  };
+
+  const handleConfirmPlanChange = async () => {
+    const targetPlan = AVAILABLE_PLANS.find(p => p.name === selectedPlanName);
+    if (!targetPlan) return;
+    setUpdatingBilling(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API_BASE_URL}/settings/billing`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          planName: targetPlan.name,
+          planPrice: targetPlan.price,
+          addInvoice: true
+        })
+      });
+      if (!res.ok) throw new Error('Failed to update subscription plan');
+      const updatedBilling = await res.json();
+      setBilling(updatedBilling);
+      toast.success(`Subscription updated to ${targetPlan.name}!`);
+      setShowPlanModal(false);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to change plan.');
+    } finally {
+      setUpdatingBilling(false);
+    }
+  };
+
+  const handleOpenPaymentModal = () => {
+    setPaymentForm({
+      cardType: billing?.paymentMethodType || 'VISA',
+      cardNumber: `4242 4242 4242 ${billing?.paymentMethodLast4 || '4242'}`,
+      cardHolder: `${profile.firstName} ${profile.lastName}`.trim() || 'Bharat EV Prime Admin',
+      expiry: billing?.paymentMethodExpiry || '12/26',
+      cvv: '888'
+    });
+    setShowPaymentModal(true);
+  };
+
+  const handleSavePaymentMethod = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setUpdatingBilling(true);
+    try {
+      const cleanCard = paymentForm.cardNumber.replace(/\s+/g, '');
+      const last4 = cleanCard.length >= 4 ? cleanCard.slice(-4) : (billing?.paymentMethodLast4 || '4242');
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API_BASE_URL}/settings/billing`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          paymentMethodType: paymentForm.cardType,
+          paymentMethodLast4: last4,
+          paymentMethodExpiry: paymentForm.expiry
+        })
+      });
+      if (!res.ok) throw new Error('Failed to update payment method');
+      const updatedBilling = await res.json();
+      setBilling(updatedBilling);
+      toast.success('Payment method updated successfully!');
+      setShowPaymentModal(false);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update payment method.');
+    } finally {
+      setUpdatingBilling(false);
+    }
+  };
+
+  const handleViewInvoice = (historyItem) => {
+    setSelectedInvoice(historyItem);
+    setShowInvoiceModal(true);
+  };
+
+  const handleAddCycleInvoice = async () => {
+    setUpdatingBilling(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await fetch(`${API_BASE_URL}/settings/billing`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          addInvoice: true
+        })
+      });
+      if (!res.ok) throw new Error('Failed to generate cycle invoice');
+      const updatedBilling = await res.json();
+      setBilling(updatedBilling);
+      toast.success('New billing cycle invoice generated!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to generate invoice.');
+    } finally {
+      setUpdatingBilling(false);
+    }
+  };
+
+  const printInvoice = (invoice) => {
+    if (!invoice) return;
+    const invDate = new Date(invoice.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const invId = invoice._id ? invoice._id.toString().slice(-6).toUpperCase() : '062601';
+    const amount = Number(invoice.amount) || (billing?.planPrice || 45000);
+    const baseAmount = (amount / 1.18).toFixed(2);
+    const gstAmount = ((amount - baseAmount) / 2).toFixed(2);
+    const invoiceNumber = `BEV-INV-2026-${invId}`;
+    
+    const printWindow = window.open('', '_blank', 'width=880,height=920');
+    if (!printWindow) {
+      toast.error('Please allow popups to download or print invoice.');
+      return;
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Invoice - ${invoiceNumber}</title>
+        <style>
+          @page { size: A4; margin: 15mm; }
+          * { box-sizing: border-box; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #111827;
+            background: #ffffff;
+            padding: 24px;
+            margin: 0;
+            line-height: 1.5;
+          }
+          .invoice-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #8CC63F;
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+          }
+          .brand-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #116631;
+            margin: 0 0 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          .brand-subtitle {
+            font-size: 13px;
+            color: #4b5563;
+            margin: 0;
+            font-weight: 500;
+          }
+          .inv-meta {
+            text-align: right;
+          }
+          .badge {
+            display: inline-block;
+            background: #ecfdf5;
+            color: #065f46;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            border: 1px solid #a7f3d0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+          }
+          .inv-no {
+            font-size: 17px;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+          }
+          .inv-date {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 2px;
+          }
+          .parties-grid {
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            margin-bottom: 28px;
+            background: #f9fafb;
+            padding: 18px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+          }
+          .party-col {
+            flex: 1;
+          }
+          .party-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #6b7280;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+          }
+          .party-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 3px;
+          }
+          table.items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+          }
+          table.items-table th {
+            background-color: #f3f4f6;
+            color: #374151;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 14px;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+          }
+          table.items-table td {
+            padding: 14px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 13px;
+            color: #1f2937;
+          }
+          .text-right { text-align: right !important; }
+          .breakdown-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+          }
+          .stamp-box {
+            border: 2px dashed #10b981;
+            background: #f0fdf4;
+            color: #047857;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 16px;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-top: 8px;
+          }
+          .totals-table {
+            width: 320px;
+            border-collapse: collapse;
+            font-size: 13px;
+          }
+          .totals-table td {
+            padding: 6px 12px;
+          }
+          .grand-total {
+            border-top: 2px solid #116631;
+            font-size: 16px;
+            font-weight: 800;
+            color: #116631;
+            padding-top: 10px !important;
+          }
+          .footer-section {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 18px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+          }
+          .print-btn-bar {
+            text-align: center;
+            margin-bottom: 20px;
+          }
+          .btn-print {
+            background-color: #8CC63F;
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          }
+          .btn-print:hover {
+            background-color: #116631;
+          }
+          @media print {
+            .print-btn-bar { display: none !important; }
+            .invoice-card { border: none !important; box-shadow: none !important; padding: 0 !important; }
+            body { padding: 0 !important; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-btn-bar">
+          <button class="btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+        </div>
+
+        <div class="invoice-card">
+          <div class="header">
+            <div>
+              <div class="brand-title">⚡ BHARAT EV PRIME</div>
+              <p class="brand-subtitle">Smart EV Charging Infrastructure Management Platform</p>
+            </div>
+            <div class="inv-meta">
+              <span class="badge">GST TAX INVOICE</span>
+              <div class="inv-no">${invoiceNumber}</div>
+              <div class="inv-date">Date: <strong>${invDate}</strong></div>
+            </div>
+          </div>
+
+          <div class="parties-grid">
+            <div class="party-col">
+              <div class="party-label">Supplier Details</div>
+              <div class="party-name">Bharat EV Prime Technologies Pvt. Ltd.</div>
+              <div>Tech Zone 4, Tower B, Sector 62</div>
+              <div>Noida, Uttar Pradesh - 201309, India</div>
+              <div><strong>GSTIN:</strong> 07AAACB2183Q1Z2</div>
+              <div><strong>PAN:</strong> AAACB2183Q</div>
+              <div><strong>Email:</strong> billing@bharatevprime.com</div>
+            </div>
+            <div class="party-col">
+              <div class="party-label">Customer / Billed To</div>
+              <div class="party-name">${(profile.firstName + ' ' + profile.lastName).trim() || 'Super Administrator'}</div>
+              <div>Tenant: Bharat EV Prime Cloud Ops</div>
+              <div><strong>Email:</strong> ${profile.email || 'admin@bharatevprime.com'}</div>
+              <div><strong>Address:</strong> ${settings.address || 'New Delhi, India'}</div>
+              <div><strong>Payment Mode:</strong> ${billing?.paymentMethodType || 'VISA'} (•••• ${billing?.paymentMethodLast4 || '4242'})</div>
+              <div><strong>Status:</strong> <span style="color:#059669; font-weight:700;">Paid</span></div>
+            </div>
+          </div>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Service Description</th>
+                <th>SAC</th>
+                <th>Qty</th>
+                <th class="text-right">Unit Rate</th>
+                <th class="text-right">Taxable Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <strong>${billing?.planName || 'Enterprise EV'} Cloud Platform Subscription</strong><br>
+                  <span style="color:#6b7280; font-size:12px;">Monthly recurring subscription for EV charger telemetry, dynamic load balancing, and admin suite</span>
+                </td>
+                <td>998313</td>
+                <td>1 Month</td>
+                <td class="text-right">₹${Number(baseAmount).toLocaleString()}</td>
+                <td class="text-right" style="font-weight:700;">₹${Number(baseAmount).toLocaleString()}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="breakdown-row">
+            <div>
+              <div class="stamp-box">✓ PAID IN FULL</div>
+              <div style="font-size:12px; color:#6b7280; margin-top:8px;">
+                Transaction ID: <strong>TXN-${invoice._id ? invoice._id.toString().slice(-8).toUpperCase() : '77218392'}</strong><br>
+                Payment Gateway: e-Bharat Secure Corporate Billing
+              </div>
+            </div>
+            <table class="totals-table">
+              <tr>
+                <td>Taxable Subtotal:</td>
+                <td class="text-right font-mono">₹${Number(baseAmount).toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td>CGST (9.0%):</td>
+                <td class="text-right font-mono">₹${Number(gstAmount).toLocaleString()}</td>
+              </tr>
+              <tr>
+                <td>SGST (9.0%):</td>
+                <td class="text-right font-mono">₹${Number(gstAmount).toLocaleString()}</td>
+              </tr>
+              <tr class="grand-total">
+                <td>Total Paid (INR):</td>
+                <td class="text-right font-mono">₹${amount.toLocaleString()}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="footer-section">
+            <p style="margin:0 0 4px 0;">This is a computer generated invoice and requires no physical signature under Indian Information Technology Act.</p>
+            <p style="margin:0; color:#9ca3af;">Thank you for partnering with Bharat EV Prime to accelerate India's electric mobility revolution.</p>
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 400);
+          }
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
+
   const tabs = [
     { id: 'general', label: 'General Info', icon: User },
-    { id: 'contactSocial', label: 'Contact & Social Links', icon: Share2 },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'appearance', label: 'Appearance', icon: Palette },
-    { id: 'billing', label: 'Billing & Plans', icon: CreditCard },
-    { id: 'integrations', label: 'Integrations', icon: LinkIcon },
   ];
 
   if (loading) {
@@ -288,51 +773,9 @@ const SettingsView = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end pt-2 mb-8">
-                <button onClick={saveProfile} disabled={savingProfile} className="bg-[#8CC63F] hover:bg-[#116631] text-white px-8 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors shadow-sm disabled:opacity-70">
+              <div className="flex justify-end pt-2">
+                <button onClick={saveProfile} disabled={savingProfile} className="bg-[#8CC63F] hover:bg-[#116631] text-white px-8 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors shadow-sm disabled:opacity-70 cursor-pointer">
                   {savingProfile ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} strokeWidth={2.5} />} Save Profile
-                </button>
-              </div>
-
-              <div className="h-px w-full bg-gray-100 mb-8"></div>
-
-              <h3 className="text-xl font-semibold text-gray-900 mb-6 mt-10">Platform Preferences</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Language</label>
-                  <div className="relative">
-                    <Globe size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <select value={settings.language} onChange={(e) => handleSettingsChange('language', e.target.value)} className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm appearance-none bg-white">
-                      <option>English (US)</option>
-                      <option>Hindi</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Timezone</label>
-                  <div className="relative">
-                    <Clock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <select value={settings.timezone} onChange={(e) => handleSettingsChange('timezone', e.target.value)} className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm appearance-none bg-white">
-                      <option>(GMT+05:30) India Standard Time</option>
-                      <option>(GMT+00:00) UTC</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-2">Currency</label>
-                  <div className="relative">
-                    <DollarSign size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <select value={settings.currency} onChange={(e) => handleSettingsChange('currency', e.target.value)} className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#8CC63F] focus:border-transparent transition-all shadow-sm appearance-none bg-white">
-                      <option>INR (₹)</option>
-                      <option>USD ($)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-6 border-t border-gray-100">
-                <button onClick={saveSettings} disabled={savingSettings} className="bg-[#8CC63F] hover:bg-[#116631] text-white px-8 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 transition-colors shadow-sm disabled:opacity-70">
-                  {savingSettings ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle2 size={18} strokeWidth={2.5} />} Save Preferences
                 </button>
               </div>
 
@@ -645,7 +1088,10 @@ const SettingsView = () => {
                   <h4 className="text-emerald-100 text-sm font-semibold mb-1">Current Plan</h4>
                   <div className="text-2xl font-semibold mb-4">{billing.planName}</div>
                   <div className="text-3xl font-semibold mb-6">₹{billing.planPrice.toLocaleString()}<span className="text-sm font-medium text-emerald-200">/mo</span></div>
-                  <button className="bg-white text-emerald-800 font-semibold px-4 py-2.5 rounded-lg text-sm w-full hover:bg-gray-50 transition-colors">
+                  <button
+                    onClick={handleOpenPlanModal}
+                    className="bg-white text-emerald-800 font-semibold px-4 py-2.5 rounded-lg text-sm w-full hover:bg-gray-50 transition-colors shadow-sm cursor-pointer"
+                  >
                     Change Plan
                   </button>
                 </div>
@@ -654,21 +1100,35 @@ const SettingsView = () => {
                   <div>
                     <h4 className="text-gray-500 text-sm font-semibold mb-1">Payment Method</h4>
                     <div className="flex items-center gap-3 mt-4">
-                      <div className="w-12 h-8 bg-blue-50 border border-blue-100 rounded flex items-center justify-center font-semibold text-blue-700 italic">{billing.paymentMethodType}</div>
+                      <div className="w-12 h-8 bg-blue-50 border border-blue-100 rounded flex items-center justify-center font-semibold text-blue-700 italic text-xs">{billing.paymentMethodType}</div>
                       <div>
                         <p className="font-semibold text-gray-900 text-sm">•••• •••• •••• {billing.paymentMethodLast4}</p>
                         <p className="text-xs font-medium text-gray-500">Expires {billing.paymentMethodExpiry}</p>
                       </div>
                     </div>
                   </div>
-                  <button className="text-emerald-600 font-semibold border border-emerald-100 bg-emerald-50 px-4 py-2.5 rounded-lg text-sm w-full hover:bg-emerald-100 transition-colors mt-6">
+                  <button
+                    onClick={handleOpenPaymentModal}
+                    className="text-emerald-600 font-semibold border border-emerald-100 bg-emerald-50 px-4 py-2.5 rounded-lg text-sm w-full hover:bg-emerald-100 transition-colors mt-6 cursor-pointer"
+                  >
                     Update Method
                   </button>
                 </div>
               </div>
 
-              <h4 className="text-base font-semibold text-gray-900 mb-4">Billing History</h4>
-              <div className="border border-gray-100 rounded-xl overflow-hidden">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-base font-semibold text-gray-900">Billing History</h4>
+                <button
+                  onClick={handleAddCycleInvoice}
+                  disabled={updatingBilling}
+                  className="text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                  title="Generate Invoice for current cycle"
+                >
+                  <Plus size={14} /> Generate Next Cycle Invoice
+                </button>
+              </div>
+
+              <div className="border border-gray-100 rounded-xl overflow-hidden bg-white shadow-xs">
                 <table className="w-full text-left">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
@@ -679,85 +1139,370 @@ const SettingsView = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {billing.billingHistory.map((history, idx) => (
-                      <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-4 py-3 text-sm font-semibold text-gray-800">{new Date(history.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                        <td className="px-4 py-3 text-sm font-semibold text-gray-600">₹{history.amount.toLocaleString()}</td>
-                        <td className="px-4 py-3"><span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">{history.status}</span></td>
-                        <td className="px-4 py-3 text-right"><button className="text-emerald-600 hover:text-emerald-700 font-semibold text-sm">Download</button></td>
+                    {billing.billingHistory && billing.billingHistory.length > 0 ? (
+                      billing.billingHistory.map((history, idx) => (
+                        <tr key={idx} className="hover:bg-gray-50/80 transition-colors">
+                          <td className="px-4 py-3 text-sm font-semibold text-gray-800">{new Date(history.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                          <td className="px-4 py-3 text-sm font-semibold text-gray-600">₹{(Number(history.amount) || billing.planPrice).toLocaleString()}</td>
+                          <td className="px-4 py-3"><span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/50">{history.status}</span></td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleViewInvoice(history)}
+                                className="text-gray-600 hover:text-emerald-700 font-semibold text-xs bg-gray-50 hover:bg-emerald-50 border border-gray-200 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
+                                title="View Tax Invoice"
+                              >
+                                <FileText size={13} /> View
+                              </button>
+                              <button
+                                onClick={() => printInvoice(history)}
+                                className="text-emerald-700 hover:text-white bg-emerald-50 hover:bg-emerald-600 border border-emerald-200 font-semibold text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
+                                title="Download PDF / Print"
+                              >
+                                <Download size={13} /> Download
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-8 text-center text-sm text-gray-400">
+                          No billing history found.
+                        </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
 
-          {activeTab === 'integrations' && (
-            <div className="max-w-2xl">
-              <h3 className="text-xl font-semibold text-gray-900 mb-6">Integrations & API</h3>
-              
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-sm font-semibold text-gray-900">API Keys</h4>
-                  <button onClick={generateApiKey} className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors">
-                    Generate New Key
-                  </button>
-                </div>
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-gray-500 font-semibold mb-1 uppercase tracking-wider">Production Key</p>
-                    <p className="text-sm font-mono text-gray-800">{settings.apiProductionKey}</p>
+        </div>
+      </div>
+
+      {/* Change Plan Modal */}
+      {showPlanModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl border border-gray-100 my-8">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Change Subscription Plan</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Select a plan tier tailored for your EV fleet and charging infrastructure</p>
+              </div>
+              <button onClick={() => setShowPlanModal(false)} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+              {AVAILABLE_PLANS.map(plan => {
+                const isSelected = selectedPlanName === plan.name;
+                const isCurrent = billing?.planName === plan.name;
+                return (
+                  <div
+                    key={plan.id}
+                    onClick={() => setSelectedPlanName(plan.name)}
+                    className={`border-2 rounded-xl p-4 cursor-pointer transition-all flex flex-col justify-between relative ${
+                      isSelected
+                        ? 'border-[#8CC63F] bg-emerald-50/20 shadow-md ring-2 ring-[#8CC63F]/20'
+                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                    }`}
+                  >
+                    {isCurrent && (
+                      <span className="absolute -top-3 right-3 bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs">
+                        Current
+                      </span>
+                    )}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
+                          {plan.badge}
+                        </span>
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-[#8CC63F] bg-[#8CC63F]' : 'border-gray-300'}`}>
+                          {isSelected && <Check size={12} className="text-white" />}
+                        </div>
+                      </div>
+                      <h4 className="font-bold text-gray-900 text-base">{plan.name}</h4>
+                      <p className="text-xs text-gray-500 mt-1 mb-3">{plan.description}</p>
+                      <div className="text-2xl font-extrabold text-gray-900 mb-1">
+                        ₹{plan.price.toLocaleString()}
+                        <span className="text-xs font-normal text-gray-500">/mo</span>
+                      </div>
+                      <p className="text-[11px] font-semibold text-emerald-700 mb-3">{plan.stations}</p>
+
+                      <ul className="space-y-2 border-t border-gray-100 pt-3">
+                        {plan.features.map((feat, fIdx) => (
+                          <li key={fIdx} className="text-[11px] text-gray-600 flex items-start gap-1.5">
+                            <CheckCircle2 size={13} className="text-[#8CC63F] shrink-0 mt-0.5" />
+                            <span>{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                  <button onClick={() => { navigator.clipboard.writeText(settings.apiProductionKey); toast.success('Copied!'); }} className="text-gray-500 hover:text-gray-700 bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm">
-                    Copy
-                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setShowPlanModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmPlanChange}
+                disabled={updatingBilling || selectedPlanName === billing?.planName}
+                className="px-6 py-2 text-sm font-semibold text-white bg-[#8CC63F] hover:bg-[#116631] rounded-lg transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                {updatingBilling ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                Confirm & Update Plan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Payment Method Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-100 my-8">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-5">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Update Payment Method</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Corporate card details for subscription renewals</p>
+              </div>
+              <button onClick={() => setShowPaymentModal(false)} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Virtual Card Preview */}
+            <div className="bg-gradient-to-tr from-slate-900 via-emerald-950 to-slate-900 text-white rounded-xl p-5 mb-5 shadow-md relative overflow-hidden border border-emerald-900/40">
+              <div className="flex justify-between items-center mb-6">
+                <span className="text-xs tracking-wider uppercase text-emerald-400 font-semibold">Corporate EV Account</span>
+                <span className="font-extrabold text-sm italic tracking-widest bg-white/10 px-2 py-0.5 rounded border border-white/20">
+                  {paymentForm.cardType}
+                </span>
+              </div>
+              <div className="font-mono text-base tracking-widest mb-4">
+                {paymentForm.cardNumber || '•••• •••• •••• 4242'}
+              </div>
+              <div className="flex justify-between items-end text-xs text-gray-300">
+                <div>
+                  <div className="text-[9px] uppercase tracking-wider text-gray-400">Card Holder</div>
+                  <div className="font-semibold text-white truncate max-w-[170px]">{paymentForm.cardHolder || 'Admin User'}</div>
                 </div>
+                <div>
+                  <div className="text-[9px] uppercase tracking-wider text-gray-400">Expires</div>
+                  <div className="font-semibold text-white">{paymentForm.expiry || '12/26'}</div>
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleSavePaymentMethod} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Card Network / Type</label>
+                <select
+                  value={paymentForm.cardType}
+                  onChange={(e) => setPaymentForm(p => ({ ...p, cardType: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-[#8CC63F] focus:ring-1 focus:ring-[#8CC63F]"
+                >
+                  <option value="VISA">VISA</option>
+                  <option value="Mastercard">Mastercard</option>
+                  <option value="RuPay">RuPay</option>
+                  <option value="Amex">American Express</option>
+                </select>
               </div>
 
               <div>
-                <h4 className="text-sm font-semibold text-gray-900 mb-4 border-b border-gray-100 pb-2">Connected Apps</h4>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:border-emerald-100 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center font-semibold text-xl">St</div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">Stripe Payments</p>
-                        <p className="text-xs text-gray-500 font-medium">Process refunds and wallet top-ups.</p>
-                      </div>
-                    </div>
-                    <div onClick={() => { handleSettingsChange('stripeEnabled', !settings.stripeEnabled); saveSettings(); }} className={`w-11 h-6 rounded-full relative cursor-pointer transition-colors ${settings.stripeEnabled ? 'bg-emerald-500' : 'bg-gray-200'}`}><div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${settings.stripeEnabled ? 'left-6' : 'left-1'}`}></div></div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:border-emerald-100 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-orange-50 text-orange-600 rounded-lg flex items-center justify-center font-semibold text-xl">AWS</div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">AWS S3 Storage</p>
-                        <p className="text-xs text-gray-500 font-medium">Cloud backup for station logs.</p>
-                      </div>
-                    </div>
-                    <div onClick={() => { handleSettingsChange('awsEnabled', !settings.awsEnabled); saveSettings(); }} className={`w-11 h-6 rounded-full relative cursor-pointer transition-colors ${settings.awsEnabled ? 'bg-emerald-500' : 'bg-gray-200'}`}><div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${settings.awsEnabled ? 'left-6' : 'left-1'}`}></div></div>
-                  </div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Cardholder Name</label>
+                <input
+                  type="text"
+                  required
+                  value={paymentForm.cardHolder}
+                  onChange={(e) => setPaymentForm(p => ({ ...p, cardHolder: e.target.value }))}
+                  placeholder="e.g. Bharat EV Prime Admin"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-[#8CC63F] focus:ring-1 focus:ring-[#8CC63F]"
+                />
+              </div>
 
-                  <div className="flex items-center justify-between p-4 border border-gray-100 rounded-xl hover:border-emerald-100 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-blue-50 text-blue-500 rounded-lg flex items-center justify-center font-semibold text-xl">Z</div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">Zendesk Support</p>
-                        <p className="text-xs text-gray-500 font-medium">Sync support tickets automatically.</p>
-                      </div>
-                    </div>
-                    <div onClick={() => { handleSettingsChange('zendeskEnabled', !settings.zendeskEnabled); saveSettings(); }} className={`w-11 h-6 rounded-full relative cursor-pointer transition-colors ${settings.zendeskEnabled ? 'bg-emerald-500' : 'bg-gray-200'}`}><div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${settings.zendeskEnabled ? 'left-6' : 'left-1'}`}></div></div>
-                  </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Card Number</label>
+                <input
+                  type="text"
+                  required
+                  maxLength={19}
+                  value={paymentForm.cardNumber}
+                  onChange={(e) => {
+                    let v = e.target.value.replace(/\D/g, '').slice(0, 16);
+                    let formatted = v.replace(/(.{4})/g, '$1 ').trim();
+                    setPaymentForm(p => ({ ...p, cardNumber: formatted || e.target.value }));
+                  }}
+                  placeholder="4242 4242 4242 4242"
+                  className="w-full px-3 py-2 text-sm font-mono border border-gray-300 rounded-lg focus:outline-none focus:border-[#8CC63F] focus:ring-1 focus:ring-[#8CC63F]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Expiry Date (MM/YY)</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={5}
+                    value={paymentForm.expiry}
+                    onChange={(e) => {
+                      let v = e.target.value.replace(/\D/g, '').slice(0, 4);
+                      if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+                      setPaymentForm(p => ({ ...p, expiry: v }));
+                    }}
+                    placeholder="12/26"
+                    className="w-full px-3 py-2 text-sm font-mono border border-gray-300 rounded-lg focus:outline-none focus:border-[#8CC63F] focus:ring-1 focus:ring-[#8CC63F]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">Security Code (CVV)</label>
+                  <input
+                    type="password"
+                    required
+                    maxLength={4}
+                    value={paymentForm.cvv}
+                    onChange={(e) => setPaymentForm(p => ({ ...p, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
+                    placeholder="•••"
+                    className="w-full px-3 py-2 text-sm font-mono border border-gray-300 rounded-lg focus:outline-none focus:border-[#8CC63F] focus:ring-1 focus:ring-[#8CC63F]"
+                  />
                 </div>
               </div>
 
-            </div>
-          )}
-
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowPaymentModal(false)}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updatingBilling}
+                  className="px-6 py-2 text-sm font-semibold text-white bg-[#8CC63F] hover:bg-[#116631] rounded-lg transition-colors flex items-center gap-2 shadow-sm disabled:opacity-50 cursor-pointer"
+                >
+                  {updatingBilling ? <Loader2 size={16} className="animate-spin" /> : <CreditCard size={16} />}
+                  Save Payment Method
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Invoice View Modal */}
+      {showInvoiceModal && selectedInvoice && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-gray-100 my-8">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100 mb-5">
+              <div className="flex items-center gap-2">
+                <span className="p-2 bg-emerald-50 text-emerald-700 rounded-lg">
+                  <FileText size={20} />
+                </span>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    Tax Invoice BEV-INV-2026-{selectedInvoice._id ? selectedInvoice._id.toString().slice(-6).toUpperCase() : '062601'}
+                  </h3>
+                  <p className="text-xs text-gray-500">Issued on {new Date(selectedInvoice.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                  {selectedInvoice.status || 'Paid'}
+                </span>
+                <button onClick={() => setShowInvoiceModal(false)} className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Invoice Summary Box */}
+            <div className="bg-gray-50 rounded-xl p-5 mb-5 border border-gray-200/80 text-xs text-gray-600 grid grid-cols-2 gap-4">
+              <div>
+                <p className="font-bold text-gray-900 uppercase text-[11px] mb-1">Supplier</p>
+                <p className="font-semibold text-gray-800">Bharat EV Prime Technologies Pvt. Ltd.</p>
+                <p>Tech Park, Sector 62, Noida, UP - 201309</p>
+                <p className="text-[11px] font-mono mt-1">GSTIN: 07AAACB2183Q1Z2</p>
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 uppercase text-[11px] mb-1">Customer / Billed To</p>
+                <p className="font-semibold text-gray-800">{(profile.firstName + ' ' + profile.lastName).trim() || 'Administrator'}</p>
+                <p>{profile.email || 'admin@bharatevprime.com'}</p>
+                <p className="text-[11px] mt-1">Payment: {billing?.paymentMethodType || 'VISA'} (•••• {billing?.paymentMethodLast4 || '4242'})</p>
+              </div>
+            </div>
+
+            {/* Line Items Table */}
+            <div className="border border-gray-100 rounded-xl overflow-hidden mb-5">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-gray-100 text-gray-700 font-semibold">
+                  <tr>
+                    <th className="p-3">Description</th>
+                    <th className="p-3">SAC</th>
+                    <th className="p-3 text-right">Taxable</th>
+                    <th className="p-3 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  <tr>
+                    <td className="p-3">
+                      <p className="font-bold text-gray-900">{billing?.planName || 'Enterprise EV'} Cloud Subscription</p>
+                      <p className="text-[11px] text-gray-500">1 Month Billing Period</p>
+                    </td>
+                    <td className="p-3 font-mono">998313</td>
+                    <td className="p-3 text-right font-mono">₹{((Number(selectedInvoice.amount) || billing?.planPrice || 45000) / 1.18).toFixed(2)}</td>
+                    <td className="p-3 text-right font-mono font-semibold">₹{((Number(selectedInvoice.amount) || billing?.planPrice || 45000) / 1.18).toFixed(2)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Tax Breakdown */}
+            <div className="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-100 mb-6 text-xs">
+              <div className="text-gray-500">
+                <p>CGST @ 9%: <span className="font-semibold text-gray-800 font-mono">₹{(((Number(selectedInvoice.amount) || 45000) - (Number(selectedInvoice.amount) || 45000)/1.18) / 2).toFixed(2)}</span></p>
+                <p>SGST @ 9%: <span className="font-semibold text-gray-800 font-mono">₹{(((Number(selectedInvoice.amount) || 45000) - (Number(selectedInvoice.amount) || 45000)/1.18) / 2).toFixed(2)}</span></p>
+              </div>
+              <div className="text-right">
+                <p className="text-gray-500 text-[11px] uppercase tracking-wider">Total Paid Amount</p>
+                <p className="text-xl font-extrabold text-[#116631] font-mono">
+                  ₹{(Number(selectedInvoice.amount) || billing?.planPrice || 45000).toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => setShowInvoiceModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => printInvoice(selectedInvoice)}
+                className="px-6 py-2 text-sm font-semibold text-white bg-[#8CC63F] hover:bg-[#116631] rounded-lg transition-colors flex items-center gap-2 shadow-sm cursor-pointer"
+              >
+                <Printer size={16} /> Print / Download PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

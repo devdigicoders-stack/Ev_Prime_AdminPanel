@@ -27,6 +27,9 @@ const ReportsView = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
+  const startDateRef = React.useRef(null);
+  const endDateRef = React.useRef(null);
+
   // Preview Modal State
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [previewData, setPreviewData] = useState([]);
@@ -38,8 +41,11 @@ const ReportsView = () => {
     try {
       const token = localStorage.getItem('adminToken');
       let url = `${API_BASE_URL}/reports/analytics?period=${periodFilter}`;
-      if (startDate && endDate) {
-        url += `&startDate=${startDate}&endDate=${endDate}`;
+      if (startDate) {
+        url += `&startDate=${startDate}`;
+      }
+      if (endDate) {
+        url += `&endDate=${endDate}`;
       }
       const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -63,8 +69,11 @@ const ReportsView = () => {
     try {
       const token = localStorage.getItem('adminToken');
       let url = `${API_BASE_URL}/reports/generate?type=${reportType}`;
-      if (startDate && endDate) {
-        url += `&startDate=${startDate}&endDate=${endDate}`;
+      if (startDate) {
+        url += `&startDate=${startDate}`;
+      }
+      if (endDate) {
+        url += `&endDate=${endDate}`;
       }
 
       const response = await fetch(url, {
@@ -246,21 +255,53 @@ const ReportsView = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm focus-within:ring-2 focus-within:ring-[#8CC63F] transition-all">
-            <Calendar size={16} className="text-gray-400 flex-shrink-0" />
-            <input 
-              type="date" 
-              value={startDate}
-              onChange={e => { setStartDate(e.target.value); setPeriodFilter('custom'); }}
-              className="text-xs text-gray-600 font-medium focus:outline-none bg-transparent"
-            />
-            <span className="text-gray-300 font-medium px-1">to</span>
-            <input 
-              type="date" 
-              value={endDate}
-              onChange={e => { setEndDate(e.target.value); setPeriodFilter('custom'); }}
-              className="text-xs text-gray-600 font-medium focus:outline-none bg-transparent"
-            />
+          <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl p-1 shadow-sm focus-within:border-[#8CC63F] focus-within:ring-2 focus-within:ring-[#8CC63F]/20 transition-all">
+            {/* Start Date Box */}
+            <div 
+              onClick={() => { try { startDateRef.current?.showPicker(); } catch (err) {} }}
+              className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-50 cursor-pointer transition border border-transparent hover:border-gray-100"
+              title="Click to select Start Date"
+            >
+              <Calendar size={14} className="text-[#8CC63F] flex-shrink-0 pointer-events-none" />
+              <input 
+                ref={startDateRef}
+                type="date" 
+                value={startDate}
+                onChange={e => { setStartDate(e.target.value); setPeriodFilter('custom'); }}
+                onClick={e => { try { e.stopPropagation(); e.target.showPicker(); } catch (err) {} }}
+                className="text-xs text-gray-700 font-semibold focus:outline-none bg-transparent cursor-pointer"
+              />
+            </div>
+
+            <span className="text-gray-300 font-bold text-xs px-0.5 select-none">to</span>
+
+            {/* End Date Box */}
+            <div 
+              onClick={() => { try { endDateRef.current?.showPicker(); } catch (err) {} }}
+              className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-50 cursor-pointer transition border border-transparent hover:border-gray-100"
+              title="Click to select End Date"
+            >
+              <Calendar size={14} className="text-[#8CC63F] flex-shrink-0 pointer-events-none" />
+              <input 
+                ref={endDateRef}
+                type="date" 
+                value={endDate}
+                onChange={e => { setEndDate(e.target.value); setPeriodFilter('custom'); }}
+                onClick={e => { try { e.stopPropagation(); e.target.showPicker(); } catch (err) {} }}
+                className="text-xs text-gray-700 font-semibold focus:outline-none bg-transparent cursor-pointer"
+              />
+            </div>
+
+            {(startDate || endDate) && (
+              <button
+                type="button"
+                onClick={() => { setStartDate(''); setEndDate(''); setPeriodFilter('monthly'); }}
+                className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1 rounded-lg transition-colors ml-0.5 cursor-pointer"
+                title="Clear date filter"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
 
           <button 

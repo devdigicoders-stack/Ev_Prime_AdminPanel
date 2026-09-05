@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, AlertTriangle, Fingerprint, Activity, Clock, ShieldAlert, Monitor, Key, Lock, Globe, Server, UserCheck, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const SecurityCenterView = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
   const [toggles, setToggles] = useState({
@@ -325,7 +327,10 @@ const SecurityCenterView = () => {
                 <div className="text-center text-sm text-gray-500 py-6">No recent security events.</div>
               )}
             </div>
-            <button className="w-full mt-4 py-2.5 text-sm font-semibold text-[#8CC63F] hover:bg-emerald-50 rounded-lg transition-colors border border-transparent hover:border-emerald-100">
+            <button 
+              onClick={() => navigate('/audit')}
+              className="w-full mt-4 py-2.5 text-sm font-semibold text-[#8CC63F] hover:bg-emerald-50 rounded-lg transition-colors border border-transparent hover:border-emerald-100 cursor-pointer"
+            >
               View All Logs
             </button>
           </div>
@@ -368,23 +373,27 @@ const SecurityCenterView = () => {
             </div>
 
             <div className="space-y-4">
-              {activeSessions.map((session) => (
-                <div key={session._id || Math.random()} className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                  <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center flex-shrink-0">
-                    {session.device.includes('Mac') || session.device.includes('Windows') ? <Monitor size={18} /> : <UserCheck size={18} />}
+              {activeSessions.length > 0 ? (
+                activeSessions.map((session) => (
+                  <div key={session._id || Math.random()} className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div className="w-10 h-10 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center flex-shrink-0">
+                      {(session.device && (session.device.includes('Mac') || session.device.includes('Windows') || session.device.includes('PC'))) ? <Monitor size={18} /> : <UserCheck size={18} />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{session.adminName || session.user || 'Admin'}</p>
+                      <p className="text-xs text-gray-500 font-medium truncate mb-1">{session.device || 'Web Browser'} • {session.location || 'India'}</p>
+                      <span className={`text-[10px] font-semibold uppercase tracking-wider ${session.status?.includes('Now') ? 'text-emerald-500' : 'text-gray-400'}`}>
+                        {session.status || 'Active Now'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{session.adminName || session.user}</p>
-                    <p className="text-xs text-gray-500 font-medium truncate mb-1">{session.device} • {session.location}</p>
-                    <span className={`text-[10px] font-semibold uppercase tracking-wider ${session.status.includes('Now') ? 'text-emerald-500' : 'text-gray-400'}`}>
-                      {session.status}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="text-center text-sm text-gray-400 py-6">No active sessions found.</div>
+              )}
             </div>
             
-            <button onClick={handleTerminateSessions} className="w-full mt-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+            <button onClick={handleTerminateSessions} className="w-full mt-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer">
               Terminate All Other Sessions
             </button>
           </div>
