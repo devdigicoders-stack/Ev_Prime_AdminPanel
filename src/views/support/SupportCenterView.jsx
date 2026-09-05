@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, HelpCircle, BookOpen, Wrench, MessageSquare, Mail, Phone, Plus, Edit2, Trash2, X, Settings, Loader2, CreditCard, Layers } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -18,6 +19,7 @@ const defaultCategories = [
   { id: 2, title: 'User Guides', desc: 'Manuals and documentation', iconName: 'User Guides' },
   { id: 3, title: 'Technical Support', desc: 'Hardware & software issues', iconName: 'Technical Support' },
   { id: 4, title: 'Billing', desc: 'Payments and invoices', iconName: 'Billing' },
+  { id: 5, title: 'Other', desc: 'Miscellaneous inquiries', iconName: 'Other' },
 ];
 
 const SupportCenterView = () => {
@@ -205,16 +207,22 @@ const SupportCenterView = () => {
       </div>
 
       {/* Categories Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
         {defaultCategories.map((category) => {
           const Icon = iconMap[category.iconName] || HelpCircle;
+          const count = articles.filter(a => a.category === category.title).length;
           return (
-            <div key={category.id} onClick={() => setSearchQuery(category.title)} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-6 hover:border-emerald-500/30 transition-all cursor-pointer group hover:-translate-y-1">
+            <div key={category.id} onClick={() => setSearchQuery(category.title)} className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-6 hover:border-emerald-500/30 transition-all cursor-pointer group hover:-translate-y-1 flex flex-col h-full">
               <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-5 group-hover:bg-[#8CC63F] group-hover:text-white transition-colors shadow-sm">
                 <Icon size={28} strokeWidth={2} />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">{category.title}</h3>
-              <p className="text-sm font-medium text-gray-500">{category.desc}</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">{category.title}</h3>
+              <p className="text-sm font-medium text-gray-500 mb-3 flex-1">{category.desc}</p>
+              <div className="mt-auto">
+                <span className="inline-block bg-gray-100 text-gray-600 text-xs font-bold px-2.5 py-1 rounded-md">
+                  {count} {count === 1 ? 'Article' : 'Articles'}
+                </span>
+              </div>
             </div>
           )
         })}
@@ -272,7 +280,7 @@ const SupportCenterView = () => {
               <div>
                 <h4 className="text-sm font-semibold text-gray-900 mb-1">Live Chat</h4>
                 <p className="text-xs text-gray-500 font-medium mb-2">Chat with our support team</p>
-                <a href={settings.liveChatUrl} target="_blank" rel="noreferrer" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">Start Chat →</a>
+                <Link to="/live-chat" className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors">Start Chat →</Link>
               </div>
             </div>
 
