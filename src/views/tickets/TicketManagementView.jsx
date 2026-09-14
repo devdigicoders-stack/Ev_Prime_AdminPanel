@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, ChevronDown, Download, Eye, MessageSquare, X, Loader2, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -24,15 +25,24 @@ const getStatusColor = (status) => {
 };
 
 const TicketManagementView = () => {
+  const [searchParams] = useSearchParams();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
   const [priorityFilter, setPriorityFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Sync status filter with URL query params
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    if (statusParam !== null && statusParam !== undefined) {
+      setStatusFilter(statusParam);
+    }
+  }, [searchParams]);
 
   // Modals
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);

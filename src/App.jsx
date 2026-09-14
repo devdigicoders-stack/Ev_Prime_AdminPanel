@@ -5,7 +5,9 @@ import AdminLayout from './layouts/AdminLayout';
 import DashboardView from './views/dashboard/DashboardView';
 import UserManagementView from './views/users/UserManagementView';
 import StationManagementView from './views/stations/StationManagementView';
+import StationDetailView from './views/stations/StationDetailView';
 import PartnerManagementView from './views/partners/PartnerManagementView';
+import PartnerDetailView from './views/partners/PartnerDetailView';
 import FranchiseManagementView from './views/franchise/FranchiseManagementView';
 import PaymentMonitoringView from './views/payments/PaymentMonitoringView';
 import RefundManagementView from './views/refunds/RefundManagementView';
@@ -84,7 +86,9 @@ function App() {
           <Route path="live-chat" element={<ProtectedRoute permission="live-chat"><LiveChatView /></ProtectedRoute>} />
           <Route path="users" element={<ProtectedRoute permission="users"><UserManagementView /></ProtectedRoute>} />
           <Route path="stations" element={<ProtectedRoute permission="stations"><StationManagementView /></ProtectedRoute>} />
+          <Route path="stations/:id" element={<ProtectedRoute permission="stations"><StationDetailView /></ProtectedRoute>} />
           <Route path="partners" element={<ProtectedRoute permission="partners"><PartnerManagementView /></ProtectedRoute>} />
+          <Route path="partners/:id" element={<ProtectedRoute permission="partners"><PartnerDetailView /></ProtectedRoute>} />
           <Route path="partner-complaints" element={<ProtectedRoute permission="partner-complaints"><PartnerComplaintsView /></ProtectedRoute>} />
           <Route path="partner-complaints/:id" element={<ProtectedRoute permission="partner-complaints"><PartnerComplaintDetailView /></ProtectedRoute>} />
           <Route path="franchise" element={<ProtectedRoute permission="franchise"><FranchiseManagementView /></ProtectedRoute>} />

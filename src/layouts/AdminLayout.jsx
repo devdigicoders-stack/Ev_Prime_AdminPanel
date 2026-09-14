@@ -106,8 +106,11 @@ const AdminLayout = () => {
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
-  const currentTitle = routeTitles[location.pathname] || 'ADMIN PANEL';
-  const { unreadCount } = useNotification();
+  const { unreadCount = 0 } = useNotification() || {};
+  const currentTitle = routeTitles[location.pathname] || (
+    location.pathname.startsWith('/stations/') ? 'STATION DETAILS & TELEMETRY' :
+    location.pathname.startsWith('/partner-complaints/') ? 'COMPLAINT DETAILS' : 'ADMIN PANEL'
+  );
 
   return (
     <div className="flex h-screen w-full bg-gray-50 overflow-hidden font-sans">

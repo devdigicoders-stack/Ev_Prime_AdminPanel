@@ -141,6 +141,7 @@ const AuditLogView = () => {
                 <option value="Station Management">Station Management</option>
                 <option value="User Management">User Management</option>
                 <option value="Refund Management">Refund Management</option>
+                <option value="Payouts">Payouts</option>
                 <option value="Ticket Management">Ticket Management</option>
                 <option value="Security">Security</option>
               </select>

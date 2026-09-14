@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Search, ChevronDown, Calendar, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -17,14 +18,23 @@ const getStatusColor = (status) => {
 };
 
 const PaymentMonitoringView = () => {
+  const [searchParams] = useSearchParams();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || 'All');
   const [methodFilter, setMethodFilter] = useState('All');
+
+  // Sync status filter with URL query params
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    if (statusParam) {
+      setStatusFilter(statusParam);
+    }
+  }, [searchParams]);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -63,7 +73,7 @@ const PaymentMonitoringView = () => {
   const filteredPayments = payments.filter(payment => {
     const searchString = `${payment.txnId} ${payment.user}`.toLowerCase();
     const matchesSearch = searchString.includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || payment.status === statusFilter;
+    const matchesStatus = statusFilter === 'All' || payment.status?.toLowerCase() === statusFilter.toLowerCase();
     const matchesMethod = methodFilter === 'All' || payment.method === methodFilter;
     return matchesSearch && matchesStatus && matchesMethod;
   });

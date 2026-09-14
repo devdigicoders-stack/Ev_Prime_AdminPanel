@@ -168,6 +168,66 @@ const SubAdminManagementView = () => {
 
   const clearAll = () => setFormData(prev => ({ ...prev, permissions: [] }));
 
+  const applyRolePreset = (presetName) => {
+    if (presetName === 'support') {
+      setFormData(prev => ({
+        ...prev,
+        role: prev.role || 'Support Administrator',
+        permissions: [
+          'dashboard.view',
+          'users.view',
+          'users.block',
+          'users.unblock',
+          'tickets.view',
+          'tickets.add',
+          'tickets.edit',
+          'support.view',
+          'support.edit',
+          'live-chat.view',
+          'live-chat.add',
+          'live-chat.edit',
+          'enquiries.view',
+          'enquiries.edit',
+          'partner-complaints.view',
+          'partner-complaints.edit',
+        ]
+      }));
+      Swal.fire({ icon: 'info', title: 'Support Admin Preset Applied', text: 'Enabled user viewing, block/unblock, and customer support desks.', timer: 1500, showConfirmButton: false });
+    } else if (presetName === 'kyc') {
+      setFormData(prev => ({
+        ...prev,
+        role: prev.role || 'KYC Verification Admin',
+        permissions: [
+          'dashboard.view',
+          'users.view',
+          'users.kyc',
+        ]
+      }));
+      Swal.fire({ icon: 'info', title: 'KYC Admin Preset Applied', text: 'Enabled user viewing and KYC verification & rejection controls.', timer: 1500, showConfirmButton: false });
+    } else if (presetName === 'finance') {
+      setFormData(prev => ({
+        ...prev,
+        role: prev.role || 'Finance Administrator',
+        permissions: [
+          'dashboard.view',
+          'users.view',
+          'users.refund',
+          'payments.view',
+          'payouts.view',
+          'payouts.edit',
+          'refunds.view',
+          'refunds.edit',
+          'reports.view',
+          'reports.add',
+        ]
+      }));
+      Swal.fire({ icon: 'info', title: 'Finance Admin Preset Applied', text: 'Enabled wallet refunds, payouts management, and financial reports.', timer: 1500, showConfirmButton: false });
+    } else if (presetName === 'full') {
+      selectAll();
+      Swal.fire({ icon: 'info', title: 'Full Access Granted', text: 'All module actions have been selected.', timer: 1500, showConfirmButton: false });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!editingAdmin && !formData.password) {
@@ -478,17 +538,105 @@ const SubAdminManagementView = () => {
 
               {/* Permissions Matrix */}
               <div className="pt-2">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                   <div>
                     <label className="text-sm font-semibold text-gray-700 block">
-                      Granular Module Permissions
+                      Granular Module Permissions & RBAC
                     </label>
-                    <span className="text-xs text-gray-500">Configure exact access levels for each module</span>
+                    <span className="text-xs text-gray-500">Configure exact access levels for each module or choose a client role template</span>
                   </div>
-                  <div className="flex gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                  <div className="flex gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 shrink-0">
                     <button type="button" onClick={selectAll} className="text-xs text-green-600 hover:text-green-700 font-semibold transition-colors">Select All</button>
                     <span className="text-gray-300">|</span>
                     <button type="button" onClick={clearAll} className="text-xs text-red-500 hover:text-red-600 font-semibold transition-colors">Clear All</button>
+                  </div>
+                </div>
+
+                {/* 1-Click Role Presets (Client Requirement 10.4) */}
+                <div className="mb-4 bg-emerald-50/50 border border-emerald-200/60 rounded-xl p-3">
+                  <span className="text-xs font-bold text-emerald-900 block mb-2">⚡ 1-Click Security Role Templates:</span>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => applyRolePreset('support')}
+                      className="px-3 py-1 bg-white hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-semibold rounded-lg border border-emerald-200 shadow-2xs transition-all cursor-pointer"
+                    >
+                      🛡️ Support Admin (View, Block, Unblock, Support)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyRolePreset('kyc')}
+                      className="px-3 py-1 bg-white hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-semibold rounded-lg border border-emerald-200 shadow-2xs transition-all cursor-pointer"
+                    >
+                      📑 KYC Admin (View & Verify/Reject KYC)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyRolePreset('finance')}
+                      className="px-3 py-1 bg-white hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-semibold rounded-lg border border-emerald-200 shadow-2xs transition-all cursor-pointer"
+                    >
+                      💳 Finance Admin (View, Wallet Refunds, Payouts)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => applyRolePreset('full')}
+                      className="px-3 py-1 bg-white hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-semibold rounded-lg border border-emerald-200 shadow-2xs transition-all cursor-pointer"
+                    >
+                      👑 Full Access Sub-Admin
+                    </button>
+                  </div>
+                </div>
+
+                {/* Dedicated User Security & Privacy Controls (Section 10) */}
+                <div className="mb-4 bg-white border border-gray-200 rounded-xl p-3.5 shadow-2xs">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                      🔐 User Management & Sensitive Data Controls (Section 10)
+                    </span>
+                    <span className="text-[11px] text-gray-400">Strict backend permission enforcement</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
+                    {[
+                      { key: 'users.view', label: 'View Users Directory', desc: 'Read access to user list & basic profiles' },
+                      { key: 'users.reveal_sensitive', label: 'Reveal Sensitive Info', desc: 'Unmask full mobile & email (PII)' },
+                      { key: 'users.block', label: 'Block User', desc: 'Prevent user from charging/booking' },
+                      { key: 'users.unblock', label: 'Unblock User', desc: 'Restore user to active status' },
+                      { key: 'users.kyc', label: 'Verify/Reject KYC', desc: 'Approve or reject customer documents' },
+                      { key: 'users.refund', label: 'Issue Wallet Refund', desc: 'Direct credit money to customer wallet' },
+                      { key: 'users.delete', label: 'Deactivate / Delete', desc: 'Soft-delete or purge user account' },
+                    ].map(item => {
+                      const isChecked = formData.permissions.includes(item.key);
+                      return (
+                        <label 
+                          key={item.key}
+                          className={`flex items-start gap-2.5 p-2 rounded-lg border cursor-pointer transition-all ${
+                            isChecked ? 'bg-emerald-50/70 border-emerald-300 text-emerald-950 font-medium' : 'bg-gray-50/50 border-gray-200 text-gray-600 hover:bg-gray-100/60'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              setFormData(prev => {
+                                const perms = [...prev.permissions];
+                                const idx = perms.indexOf(item.key);
+                                if (idx >= 0) perms.splice(idx, 1);
+                                else {
+                                  perms.push(item.key);
+                                  if (!perms.includes('users.view')) perms.push('users.view');
+                                }
+                                return { ...prev, permissions: perms };
+                              });
+                            }}
+                            className="w-4 h-4 mt-0.5 accent-green-600 rounded cursor-pointer shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <span className="block font-semibold text-gray-900">{item.label}</span>
+                            <span className="block text-[10px] text-gray-500 leading-tight mt-0.5">{item.desc}</span>
+                          </div>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
                 
