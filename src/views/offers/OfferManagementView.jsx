@@ -190,7 +190,9 @@ const OfferManagementView = () => {
       description: offer.description || '',
       code: offer.code || '',
       discountType: offer.discountType || 'PERCENTAGE',
-      discountValue: offer.discountValue !== undefined ? offer.discountValue : '',
+      discountValue: offer.discountValue !== undefined 
+        ? (offer.discountType === 'PERCENTAGE' && Number(offer.discountValue) > 100 ? 100 : offer.discountValue) 
+        : '',
       minOrderAmount: offer.minOrderAmount !== undefined && offer.minOrderAmount !== null ? offer.minOrderAmount : '',
       maxDiscountAmount: offer.maxDiscountAmount !== undefined && offer.maxDiscountAmount !== null ? offer.maxDiscountAmount : '',
       totalUsageLimit: offer.totalUsageLimit !== undefined && offer.totalUsageLimit !== null ? offer.totalUsageLimit : '',
@@ -276,16 +278,33 @@ const OfferManagementView = () => {
       return;
     }
 
-    // 1. Discount Value Validation (0–100% for Percentage, > 0 for Flat)
-    const numDiscount = Number(formData.discountValue);
+    // 1. Discount Value Validation (Max 3 digits & 1–100% for Percentage, > 0 for Flat)
+    const discountStr = String(formData.discountValue ?? '').trim();
+    if (!discountStr) {
+      toast.error('Discount Value is required.');
+      return;
+    }
+
+    const numDiscount = Number(discountStr);
     if (isNaN(numDiscount) || numDiscount <= 0) {
       toast.error('Discount Value must be greater than 0.');
       return;
     }
 
-    if (formData.discountType === 'PERCENTAGE' && numDiscount > 100) {
-      toast.error('Percentage discount cannot exceed 100%. Value must be between 0.01% and 100%.');
-      return;
+    if (formData.discountType === 'PERCENTAGE') {
+      if (discountStr.length > 3) {
+        toast.error('Percentage discount cannot exceed 3 digits (maximum 100%).');
+        return;
+      }
+      if (numDiscount > 100) {
+        toast.error('Percentage discount cannot exceed 100%. Value must be between 1% and 100%.');
+        return;
+      }
+    } else {
+      if (discountStr.length > 6) {
+        toast.error('Flat discount amount cannot exceed 6 digits (maximum ₹9,99,999).');
+        return;
+      }
     }
 
     // Point 5: Mandatory Maximum Discount Cap for Percentage
@@ -567,6 +586,101 @@ const OfferManagementView = () => {
     return { valid: true, message: `Valid code — ${sanitized.length} characters.`, charCount: sanitized.length };
   }, [formData.code]);
 
+  // Real-time Dynamic Discount Value Validation (Strict 3 Digits for Percentage, 1-100%)
+  const discountValidation = useMemo(() => {
+    const raw = String(formData.discountValue ?? '').trim();
+    if (!raw) return { valid: null, message: '', charCount: 0 };
+
+    if (formData.discountType === 'PERCENTAGE') {
+      const charCount = raw.length;
+      if (charCount > 3) {
+        return {
+          valid: false,
+          message: 'Maximum 3 digits allowed. Percentage cannot exceed 100%.',
+          charCount
+        };
+      }
+      const num = Number(raw);
+      if (isNaN(num) || num <= 0) {
+        return {
+          valid: false,
+          message: 'Percentage must be greater than 0% (e.g. 10%, 20%).',
+          charCount
+        };
+      }
+      if (num > 100) {
+        return {
+          valid: false,
+          message: 'Percentage cannot exceed 100%. Max value is 100%.',
+          charCount
+        };
+      }
+      return {
+        valid: true,
+        message: `Valid discount: ${num}% (${charCount}/3 digits)`,
+        charCount
+      };
+    } else {
+      const num = Number(raw);
+      if (isNaN(num) || num <= 0) {
+        return { valid: false, message: 'Flat discount must be greater than ₹0.', charCount: raw.length };
+      }
+      if (raw.length > 6) {
+        return { valid: false, message: 'Flat discount cannot exceed 6 digits (₹9,99,999).', charCount: raw.length };
+      }
+      return { valid: true, message: `Valid flat discount: ₹${num}`, charCount: raw.length };
+    }
+  }, [formData.discountValue, formData.discountType]);
+
+  // Handle dynamic discount input change (strictly enforces max 3 digits for percentage)
+  const handleDiscountChange = (e) => {
+    let val = e.target.value;
+    
+    if (formData.discountType === 'PERCENTAGE') {
+      // Remove any non-numeric characters
+      val = val.replace(/\D/g, '');
+      
+      // Strictly restrict to maximum 3 digits (e.g. 100)
+      if (val.length > 3) {
+        val = val.slice(0, 3);
+      }
+      
+      // Auto-cap to 100 if typed number > 100
+      if (val && Number(val) > 100) {
+        val = '100';
+      }
+    } else {
+      // Flat amount: digits only, max 6 digits
+      val = val.replace(/\D/g, '');
+      if (val.length > 6) {
+        val = val.slice(0, 6);
+      }
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      discountValue: val
+    }));
+  };
+
+  // Handle Discount Type switch with automatic value sanitization
+  const handleDiscountTypeChange = (e) => {
+    const newType = e.target.value;
+    setFormData(prev => {
+      let updatedVal = prev.discountValue;
+      if (newType === 'PERCENTAGE') {
+        let clean = String(updatedVal || '').replace(/\D/g, '').slice(0, 3);
+        if (clean && Number(clean) > 100) clean = '100';
+        updatedVal = clean;
+      }
+      return {
+        ...prev,
+        discountType: newType,
+        discountValue: updatedVal
+      };
+    });
+  };
+
   // Auto-uppercase & strip spaces on coupon code input
   const handleCodeChange = (e) => {
     const sanitized = e.target.value.replace(/\s+/g, '').toUpperCase();
@@ -812,9 +926,14 @@ const OfferManagementView = () => {
                             </span>
                             <span className="font-extrabold text-sm text-gray-900">
                               {offer.discountType === 'PERCENTAGE'
-                                ? `${offer.discountValue}% OFF`
+                                ? `${Math.min(100, Math.max(0, offer.discountValue))}% OFF`
                                 : `₹${offer.discountValue} OFF`}
                             </span>
+                            {offer.discountType === 'PERCENTAGE' && Number(offer.discountValue) > 100 && (
+                              <span className="text-[9px] font-bold text-rose-600 bg-rose-50 px-1 py-0.2 rounded border border-rose-200" title={`Original value in DB was ${offer.discountValue}% (exceeds 100%)`}>
+                                Capped (DB: {offer.discountValue}%)
+                              </span>
+                            )}
                           </div>
 
                           <div className="flex flex-wrap items-center gap-1.5">
@@ -1158,7 +1277,7 @@ const OfferManagementView = () => {
                       <select
                         name="discountType"
                         value={formData.discountType}
-                        onChange={handleInputChange}
+                        onChange={handleDiscountTypeChange}
                         className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#8CC63F] focus:ring-1 focus:ring-[#8CC63F] cursor-pointer bg-white"
                       >
                         <option value="PERCENTAGE">Percentage (%)</option>
@@ -1169,33 +1288,67 @@ const OfferManagementView = () => {
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="block text-sm font-semibold text-gray-700">Discount Value *</label>
-                        {formData.discountType === 'PERCENTAGE' && (
-                          <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200">
-                            Range: 0.01% – 100%
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {discountValidation.charCount > 0 && (
+                            <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border ${
+                              discountValidation.valid === true
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                : 'bg-rose-50 text-rose-700 border-rose-300'
+                            }`}>
+                              {discountValidation.charCount}/{formData.discountType === 'PERCENTAGE' ? '3 digits' : '6 digits'}
+                            </span>
+                          )}
+                          {formData.discountType === 'PERCENTAGE' && (
+                            <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
+                              Max 3 digits (1%–100%)
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="relative">
                         <input
-                          type="number"
+                          type="text"
+                          inputMode="numeric"
                           name="discountValue"
                           required
-                          min="0.01"
-                          max={formData.discountType === 'PERCENTAGE' ? '100' : undefined}
-                          step="any"
+                          maxLength={formData.discountType === 'PERCENTAGE' ? 3 : 6}
                           value={formData.discountValue}
-                          onChange={handleInputChange}
-                          className={`w-full px-3 py-2 pr-8 border rounded-xl text-sm font-semibold focus:outline-none transition-all bg-white ${
-                            formData.discountType === 'PERCENTAGE' && Number(formData.discountValue) > 100
-                              ? 'border-rose-400 focus:ring-2 focus:ring-rose-500 bg-rose-50/40 text-rose-900'
-                              : 'border-gray-200 focus:border-[#8CC63F] focus:ring-1 focus:ring-[#8CC63F]'
+                          onChange={handleDiscountChange}
+                          className={`w-full px-3 py-2 pr-10 border rounded-xl text-sm font-semibold focus:outline-none transition-all bg-white ${
+                            discountValidation.valid === true
+                              ? 'border-emerald-400 focus:ring-1 focus:ring-emerald-500 bg-emerald-50/30'
+                              : discountValidation.valid === false
+                                ? 'border-rose-400 focus:ring-1 focus:ring-rose-500 bg-rose-50/30'
+                                : 'border-gray-200 focus:border-[#8CC63F] focus:ring-1 focus:ring-[#8CC63F]'
                           }`}
-                          placeholder={formData.discountType === 'PERCENTAGE' ? 'e.g. 20' : 'e.g. 50'}
+                          placeholder={formData.discountType === 'PERCENTAGE' ? 'e.g. 20 (Max 100)' : 'e.g. 50'}
                         />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 pointer-events-none">
-                          {formData.discountType === 'PERCENTAGE' ? '%' : '₹'}
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 pointer-events-none">
+                          {discountValidation.valid === true && (
+                            <Check size={14} className="text-emerald-500" />
+                          )}
+                          {discountValidation.valid === false && (
+                            <AlertCircle size={14} className="text-rose-500" />
+                          )}
+                          <span className="text-xs font-bold text-gray-500">
+                            {formData.discountType === 'PERCENTAGE' ? '%' : '₹'}
+                          </span>
                         </div>
                       </div>
+                      {discountValidation.message && (
+                        <p className={`text-[11px] mt-1 font-medium ${
+                          discountValidation.valid === true ? 'text-emerald-600' : 'text-rose-600'
+                        }`}>
+                          {discountValidation.valid === true ? '✓' : '✗'} {discountValidation.message}
+                        </p>
+                      )}
+                      {!discountValidation.charCount && (
+                        <p className="text-[11px] text-gray-400 mt-1">
+                          {formData.discountType === 'PERCENTAGE'
+                            ? 'Allows only up to 3 digits (1% to 100%).'
+                            : 'Enter flat rupee discount amount (max 6 digits).'}
+                        </p>
+                      )}
                     </div>
 
                     <div>
